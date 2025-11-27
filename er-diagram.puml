@@ -1,0 +1,116 @@
+@startuml CampusRatingER
+title 校园售货机商品评价平台 ER 图
+
+entity Product {
+  *product_id : UUID
+  ---
+  name : string
+  brand : string
+  category : string
+  spec : string
+  launch_date : date
+  is_limited : boolean
+}
+
+entity School {
+  *school_id : UUID
+  ---
+  name : string
+  country : string
+  city : string
+  campus_type : string
+  partner : string
+}
+
+entity SchoolProduct {
+  *school_product_id : UUID
+  ---
+  school_id : UUID
+  product_id : UUID
+  price : decimal
+}
+
+entity RatingSubmission {
+  *rating_id : UUID
+  ---
+  school_product_id : UUID
+  tier_grade : enum
+  taste_score : int
+  value_score : int
+  package_score : int
+  supply_score : int
+  selected_tags : text
+}
+
+entity Tag {
+  *tag_id : UUID
+  ---
+  name : string
+  description : string
+}
+
+entity RatingTag {
+  *rating_tag_id : UUID
+  ---
+  rating_id : UUID
+  tag_id : UUID
+}
+
+entity Badge {
+  *badge_id : UUID
+  ---
+  name : string
+  description : string
+  badge_type : enum
+  rule_desc : text
+}
+
+entity ProductBadge {
+  *product_badge_id : UUID
+  ---
+  product_id : UUID
+  badge_id : UUID
+  period : string
+  awarded_at : datetime
+}
+
+entity SchoolBadge {
+  *school_badge_id : UUID
+  ---
+  school_id : UUID
+  badge_id : UUID
+  period : string
+  awarded_at : datetime
+}
+
+entity Leaderboard {
+  *leaderboard_id : UUID
+  ---
+  name : string
+  type : string
+  formula : text
+}
+
+entity LeaderboardEntry {
+  *entry_id : UUID
+  ---
+  leaderboard_id : UUID
+  product_id : UUID
+  rank : int
+  score : decimal
+}
+
+Product ||--o{ SchoolProduct : stocked_in
+School ||--o{ SchoolProduct : offers
+SchoolProduct ||--o{ RatingSubmission : receives
+RatingSubmission ||--o{ RatingTag : uses
+Tag ||--o{ RatingTag : labeled_by
+Product ||--o{ ProductBadge : earns
+Badge ||--o{ ProductBadge : assigned
+School ||--o{ SchoolBadge : decorated_by
+Badge ||--o{ SchoolBadge : assigned
+Leaderboard ||--o{ LeaderboardEntry : contains
+Product ||--o{ LeaderboardEntry : ranks
+
+@enduml
+
