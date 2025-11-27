@@ -34,12 +34,29 @@ entity RatingSubmission {
   *rating_id : UUID
   ---
   school_product_id : UUID
+  user_id : UUID
   tier_grade : enum
   taste_score : int
   value_score : int
   package_score : int
   supply_score : int
   selected_tags : text
+}
+
+entity User {
+  *user_id : UUID
+  ---
+  username : string
+  password_hash : string
+}
+
+entity Comment {
+  *comment_id : UUID
+  ---
+  rating_id : UUID
+  user_id : UUID
+  content : text
+  created_at : datetime
 }
 
 entity Tag {
@@ -103,8 +120,11 @@ entity LeaderboardEntry {
 Product ||--o{ SchoolProduct : stocked_in
 School ||--o{ SchoolProduct : offers
 SchoolProduct ||--o{ RatingSubmission : receives
+User ||--o{ RatingSubmission : submits
 RatingSubmission ||--o{ RatingTag : uses
 Tag ||--o{ RatingTag : labeled_by
+RatingSubmission ||--o{ Comment : commented_by
+User ||--o{ Comment : writes
 Product ||--o{ ProductBadge : earns
 Badge ||--o{ ProductBadge : assigned
 School ||--o{ SchoolBadge : decorated_by
