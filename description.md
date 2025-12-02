@@ -1,58 +1,53 @@
-# 售货机商品评价平台 – 功能说明
+# Rate My Classmate – 功能说明
 
 ## 使用人群
-不同学校的学生通过注册用户名与密码登录后，可对校园售货机商品打分、发表评论并查看榜单；校方和合作服务商登录后台以监测反馈和管理内容。
+不同学校的学生通过注册用户名与密码（支持学号或邮箱登录）后，可对同校或其他学校的同学进行打分、发表评论并查看榜单；校方和管理员通过后台监测反馈和管理内容。
 
 ## 被评对象
-分布在不同学校校园内的售货机商品（饮料、零食、日用品等），可直接按学校、品牌、品类、容量以及渠道合作方等维度浏览，无需关注具体机器。
+分布在不同学校校园内的学生（同学），可直接按学校、年级、专业/班级等维度浏览和搜索。
 
 ## 评分体系
-- 主等级：五档语义等级 `夯 > 顶级 > 人上人 > NPC > 拉完了`。
-- 多维评分：`口味/品质`、`性价比`、`包装体验`、`供应稳定性` 四个 1–10 分维度。
-- 标签体系：运营方维护的标签库（如“解馋”“低糖”“季节限定”），投票时用户仅需勾选。
+- 评分等级：五档语义等级 `夯 > 顶级 > 人上人 > NPC > 拉完了`，内部映射分值 `夯=5, 顶级=4, 人上人=3, NPC=2, 拉完了=1`。
+- 评分逻辑：每次打分会记录一个 1–5 的 `score`，系统统计每个同学各等级出现次数，并以出现最多的等级作为默认显示。同时在统计表中累积平均分与数量，支持榜单排序。
+- 评论字段：评分时可附带文本评论，方便补充情感化描述。
 
 ## 额外/可选功能
-- 排行榜：Top 10 综合榜、新品榜、地区/学校榜，支持按周期（周/月/季度）自动生成并导出。
-- 徽章体系：授予商品或学校的称号，如“年度口碑王”“最具性价比零食”“补货最及时学校”。
-- 搜索与筛选：按学校、品牌、品类、地区、价格区间等条件检索。
-- 评分排序：按综合等级、多维平均、最近 30 天变化率等维度排序。
-- 评论聚合：按商品或学校查看全部评论，可按时间或热度排序，校方可将高质量评论置顶。
+- 排行榜：Top 10 综合榜、学校榜、年级榜，支持按周期（周/月/季度）自动生成并导出，数据源自评分统计表。
+- 徽章体系：授予同学或学校的称号，如"年度最受欢迎同学""最佳学习伙伴""最友善学校"。
+- 搜索与筛选：按学校、年级、班级、姓名、平均分区间等条件检索。
+- 评分排序：按综合等级、平均分、最近 30 天变化率等维度排序。
+- 评论聚合：按同学或学校查看全部评论，可按时间或热度排序。
 
 ## 交互特性
 - 学生端：账号登录、提交评分、撰写/编辑/删除自己的评论。
-- 评论区：按学校或商品查看，评论发布即刻生效，可按时间或热度排序。
-- 校方/合作服务商后台可批量导出评分、配置标签、设置榜单周期并定义徽章条件。
+- 评论区：按学校或同学查看，评论发布即刻生效，可按时间或热度排序。
+- 校方/管理员后台可批量导出评分、配置标签、设置榜单周期并定义徽章条件。
 
 
 ---
 
 ## ER 模型概览
-平台围绕“学生为不同学校售货机商品打分”这一场景，仅保留支撑评分、标签、徽章、榜单与筛选的必要数据结构。核心实体如下：
+平台围绕"学生为不同学校的同学打分"这一场景，结合新表结构（students / schools / ratings / rating_summary 等），仅保留支撑评分、统计、榜单与徽章的必要实体。核心表如下：
 
 | 实体 | 关键字段 | 说明 |
 | --- | --- | --- |
-| Product | product_id (PK)、名称、品牌、类别、规格、上市日期、是否季节限定 | 售货机商品本体 |
-| School | school_id (PK)、学校名称、城市、国家、类型（大学/高中等）、合作方 | 校园实体 |
-| SchoolProduct | school_product_id (PK)、school_id (FK)、product_id (FK)、售价 | 学校与商品的关联与定价 |
-| RatingSubmission | rating_id (PK)、school_product_id (FK)、user_id (FK, 可空)、等级、多维分、标签数组 | 学生端评分记录（可匿名，绑定账号时写入 user_id） |
-| User | user_id (PK)、username、password_hash | 学生/管理员账户 |
-| Tag | tag_id (PK)、名称、描述 | 标签库 |
-| RatingTag | rating_tag_id (PK)、rating_id (FK)、tag_id (FK) | 评分与标签的 M:N |
-| Badge | badge_id (PK)、名称、描述、类型（商品/学校）、评选规则 | 徽章定义 |
-| ProductBadge | product_badge_id (PK)、product_id (FK)、badge_id (FK)、period | 商品获徽 |
-| SchoolBadge | school_badge_id (PK)、school_id (FK)、badge_id (FK)、period | 学校获徽 |
-| Comment | comment_id (PK)、rating_id (FK)、user_id (FK)、content、created_at | 用户评论记录 |
-| Leaderboard | leaderboard_id (PK)、名称、类型、计算逻辑 | 榜单定义 |
-| LeaderboardEntry | entry_id (PK)、leaderboard_id (FK)、product_id (FK)、rank、score | 榜单条目，记录商品在各榜单中的名次 |
+| Student | student_id (PK)、school_id (FK)、name、grade、class、account、password_hash、created_at | 学生账户与被评主体，所有密码仅存哈希 |
+| School | school_id (PK)、school_name、created_at | 学校档案，可扩展城市/类型等属性 |
+| Rating | rating_id (PK)、rater_id (FK)、target_id (FK)、score（1–5）、comment、created_at | 评分记录（评分者≠被评分者，可设置 UNIQUE(rater_id, target_id)） |
+| RatingSummary | target_id (PK, FK)、avg_score、rating_count、last_update | 评分冗余统计，供榜单与排序使用 |
+| Badge | badge_id (PK)、name、description、type（student/school）、rule_desc | 徽章定义 |
+| StudentBadge | student_badge_id (PK)、student_id (FK)、badge_id (FK)、period | 同学获徽记录 |
+| SchoolBadge | school_badge_id (PK)、school_id (FK)、badge_id (FK)、period | 学校获徽记录 |
+| Leaderboard | leaderboard_id (PK)、name、type、formula | 榜单定义（综合榜/学校榜/年级榜等） |
+| LeaderboardEntry | entry_id (PK)、leaderboard_id (FK)、student_id (FK)、rank、score_snapshot | 榜单条目，score_snapshot 来源于 RatingSummary |
 
 ### UML示意图
 ![UML](UML.png)
 ### 基数关系
-- `School` 1:N `SchoolProduct`，`Product` 1:N `SchoolProduct`。
-- `SchoolProduct` 1:N `RatingSubmission`，`User` 1:N `RatingSubmission`（可选）。
-- `RatingSubmission` M:N `Tag`（通过 `RatingTag`）。
-- `User` 1:N `Comment`，`RatingSubmission` 1:N `Comment`。
-- `Badge` 1:N `ProductBadge` / `SchoolBadge`。
-- `Leaderboard` 1:N `LeaderboardEntry`，`Product` 1:N `LeaderboardEntry`；可扩展以学校为主体的榜单。
+- `School` 1:N `Student`。
+- `Student` 1:N `Rating`（作为 rater），同时 `Student` 1:N `Rating`（作为 target）。
+- `Rating` 对 `RatingSummary` 是 1:N（同一 target 聚合到 1 条 summary），推荐实现 1:1（每位同学一条统计）。
+- `Badge` 1:N `StudentBadge` / `SchoolBadge`。
+- `Leaderboard` 1:N `LeaderboardEntry`，`Student` 1:N `LeaderboardEntry`；榜单分值来自 `RatingSummary`。
 
 

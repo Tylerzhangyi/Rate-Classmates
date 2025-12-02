@@ -1,76 +1,41 @@
-@startuml CampusRatingER
-title 校园售货机商品评价平台 ER 图
+@startuml RateMyClassmateER
+title Rate My Classmate 平台 ER 图
 
-entity Product {
-  *product_id : UUID
+entity Student {
+  *student_id : UUID
   ---
+  school_id : UUID
   name : string
-  brand : string
-  category : string
-  spec : string
-  launch_date : date
-  is_limited : boolean
+  grade : int
+  class_no : int
+  account : string
+  password_hash : string
+  created_at : datetime
 }
 
 entity School {
   *school_id : UUID
   ---
-  name : string
-  country : string
-  city : string
-  campus_type : string
-  partner : string
-}
-
-entity SchoolProduct {
-  *school_product_id : UUID
-  ---
-  school_id : UUID
-  product_id : UUID
-  price : decimal
-}
-
-entity RatingSubmission {
-  *rating_id : UUID
-  ---
-  school_product_id : UUID
-  user_id : UUID
-  tier_grade : enum
-  taste_score : int
-  value_score : int
-  package_score : int
-  supply_score : int
-  selected_tags : text
-}
-
-entity User {
-  *user_id : UUID
-  ---
-  username : string
-  password_hash : string
-}
-
-entity Comment {
-  *comment_id : UUID
-  ---
-  rating_id : UUID
-  user_id : UUID
-  content : text
+  school_name : string
   created_at : datetime
 }
 
-entity Tag {
-  *tag_id : UUID
+entity Rating {
+  *rating_id : UUID
   ---
-  name : string
-  description : string
+  rater_id : UUID
+  target_id : UUID
+  score : int
+  comment : text
+  created_at : datetime
 }
 
-entity RatingTag {
-  *rating_tag_id : UUID
+entity RatingSummary {
+  *target_id : UUID
   ---
-  rating_id : UUID
-  tag_id : UUID
+  avg_score : float
+  rating_count : int
+  last_update : datetime
 }
 
 entity Badge {
@@ -82,10 +47,10 @@ entity Badge {
   rule_desc : text
 }
 
-entity ProductBadge {
-  *product_badge_id : UUID
+entity StudentBadge {
+  *student_badge_id : UUID
   ---
-  product_id : UUID
+  student_id : UUID
   badge_id : UUID
   period : string
   awarded_at : datetime
@@ -112,25 +77,24 @@ entity LeaderboardEntry {
   *entry_id : UUID
   ---
   leaderboard_id : UUID
-  product_id : UUID
+  student_id : UUID
   rank : int
   score : decimal
 }
 
-Product ||--o{ SchoolProduct : stocked_in
-School ||--o{ SchoolProduct : offers
-SchoolProduct ||--o{ RatingSubmission : receives
-User ||--o{ RatingSubmission : submits
-RatingSubmission ||--o{ RatingTag : uses
-Tag ||--o{ RatingTag : labeled_by
-RatingSubmission ||--o{ Comment : commented_by
-User ||--o{ Comment : writes
-Product ||--o{ ProductBadge : earns
-Badge ||--o{ ProductBadge : assigned
+School ||--o{ Student : hosts
+Student ||--o{ Rating : submits
+Student ||--o{ Rating : receives
+Student ||--|| RatingSummary : summarized_by
+Rating ||--|| RatingSummary : updates
+Student ||--o{ StudentBadge : earns
+Badge ||--o{ StudentBadge : assigned
 School ||--o{ SchoolBadge : decorated_by
 Badge ||--o{ SchoolBadge : assigned
 Leaderboard ||--o{ LeaderboardEntry : contains
-Product ||--o{ LeaderboardEntry : ranks
+Student ||--o{ LeaderboardEntry : ranks
+
+@enduml
 
 @enduml
 
