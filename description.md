@@ -40,6 +40,7 @@
 | SchoolBadge | school_badge_id (PK)、school_id (FK)、badge_id (FK)、period | 学校获徽记录 |
 | Leaderboard | leaderboard_id (PK)、name、type、formula | 榜单定义（综合榜/学校榜/年级榜等） |
 | LeaderboardEntry | entry_id (PK)、leaderboard_id (FK)、student_id (FK)、rank、score_snapshot | 榜单条目，score_snapshot 来源于 RatingSummary |
+| SchoolApplication | application_id (PK)、applicant_id (FK)、applicant_name、applicant_account、school_name、contact、reason、status（pending/approved/rejected）、created_at、updated_at | 学校申请记录，学生可申请添加新学校，管理员审核后决定是否添加 |
 
 ### UML示意图
 ![UML](UML.png)
@@ -49,5 +50,6 @@
 - `Rating` 对 `RatingSummary` 是 1:N（同一 target 聚合到 1 条 summary），推荐实现 1:1（每位同学一条统计）。
 - `Badge` 1:N `StudentBadge` / `SchoolBadge`。
 - `Leaderboard` 1:N `LeaderboardEntry`，`Student` 1:N `LeaderboardEntry`；榜单分值来自 `RatingSummary`。
+- `Student` 1:N `SchoolApplication`；学生可以提交多个学校申请，每个申请对应一个学校。
 
 

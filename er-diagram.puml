@@ -82,19 +82,32 @@ entity LeaderboardEntry {
   score : decimal
 }
 
-School ||--o{ Student : hosts
-Student ||--o{ Rating : submits
-Student ||--o{ Rating : receives
-Student ||--|| RatingSummary : summarized_by
-Rating ||--|| RatingSummary : updates
-Student ||--o{ StudentBadge : earns
-Badge ||--o{ StudentBadge : assigned
-School ||--o{ SchoolBadge : decorated_by
-Badge ||--o{ SchoolBadge : assigned
-Leaderboard ||--o{ LeaderboardEntry : contains
-Student ||--o{ LeaderboardEntry : ranks
+entity SchoolApplication {
+  *application_id : UUID
+  ---
+  applicant_id : UUID
+  applicant_name : string
+  applicant_account : string
+  school_name : string
+  contact : string
+  reason : text
+  status : enum
+  created_at : datetime
+  updated_at : datetime
+}
 
-@enduml
+School ||--o{ Student
+Student ||--o{ Rating
+Student ||--o{ Rating
+Student ||--|| RatingSummary
+Rating ||--|| RatingSummary
+Student ||--o{ StudentBadge
+Badge ||--o{ StudentBadge
+School ||--o{ SchoolBadge
+Badge ||--o{ SchoolBadge
+Leaderboard ||--o{ LeaderboardEntry
+Student ||--o{ LeaderboardEntry
+Student ||--o{ SchoolApplication
 
 @enduml
 
