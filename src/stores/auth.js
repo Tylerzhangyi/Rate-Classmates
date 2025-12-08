@@ -13,7 +13,8 @@ export const useAuthStore = defineStore('auth', () => {
       school_id: '1',
       school_name: '北京大学',
       grade: 2021,
-      class_no: 1
+      class_no: 1,
+      role: 'student'
     },
     {
       id: '2',
@@ -23,11 +24,20 @@ export const useAuthStore = defineStore('auth', () => {
       school_id: '2',
       school_name: '清华大学',
       grade: 2022,
-      class_no: 2
+      class_no: 2,
+      role: 'student'
+    },
+    {
+      id: 'admin',
+      account: 'admin',
+      password: 'admin123',
+      name: '管理员',
+      role: 'admin'
     }
   ])
 
   const isAuthenticated = computed(() => currentUser.value !== null)
+  const isAdmin = computed(() => currentUser.value?.role === 'admin')
 
   function login(account, password) {
     const user = users.value.find(
@@ -45,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     const newUser = {
       id: String(users.value.length + 1),
       ...userData,
+      role: 'student', // 默认角色为学生
       created_at: new Date().toISOString()
     }
     users.value.push(newUser)
@@ -69,6 +80,7 @@ export const useAuthStore = defineStore('auth', () => {
     currentUser,
     users,
     isAuthenticated,
+    isAdmin,
     login,
     register,
     logout,

@@ -10,6 +10,7 @@ entity Student {
   class_no : int
   account : string
   password_hash : string
+  role : enum
   created_at : datetime
 }
 

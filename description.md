@@ -31,7 +31,7 @@
 
 | 实体 | 关键字段 | 说明 |
 | --- | --- | --- |
-| Student | student_id (PK)、school_id (FK)、name、grade、class、account、password_hash、created_at | 学生账户与被评主体，所有密码仅存哈希 |
+| Student | student_id (PK)、school_id (FK)、name、grade、class、account、password_hash、role（student/admin）、created_at | 学生账户与被评主体，所有密码仅存哈希，role字段区分普通学生和管理员 |
 | School | school_id (PK)、school_name、created_at | 学校档案，可扩展城市/类型等属性 |
 | Rating | rating_id (PK)、rater_id (FK)、target_id (FK)、score（1–5）、comment、created_at | 评分记录（评分者≠被评分者，可设置 UNIQUE(rater_id, target_id)） |
 | RatingSummary | target_id (PK, FK)、avg_score、rating_count、last_update | 评分冗余统计，供榜单与排序使用 |

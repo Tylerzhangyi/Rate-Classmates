@@ -239,11 +239,16 @@ export const useDataStore = defineStore('data', () => {
       application.status = status
       application.updated_at = new Date().toISOString()
       
-      // 如果审核通过，自动添加学校
+      // 如果审核通过，自动添加学校（如果学校不存在）
       if (status === 'approved') {
-        addSchool({
-          school_name: application.school_name
-        })
+        const existingSchool = schools.value.find(
+          s => s.school_name.toLowerCase() === application.school_name.toLowerCase()
+        )
+        if (!existingSchool) {
+          addSchool({
+            school_name: application.school_name
+          })
+        }
       }
       return application
     }
