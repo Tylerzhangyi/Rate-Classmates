@@ -7,6 +7,8 @@
       <div class="nav-links">
         <router-link to="/students">学生列表</router-link>
         <router-link to="/leaderboard">排行榜</router-link>
+        <router-link to="/apply-student">申请学生</router-link>
+        <router-link to="/apply-school">申请学校</router-link>
         <router-link to="/profile">个人中心</router-link>
         <button @click="handleLogout" class="btn-logout">退出</button>
       </div>

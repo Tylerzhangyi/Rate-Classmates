@@ -50,7 +50,7 @@
               <div class="entry-name">{{ entry.name }}</div>
               <div class="entry-details">
                 <span>{{ entry.school_name }}</span>
-                <span>{{ entry.grade }}级 {{ entry.class_no }}班</span>
+                <span>{{ entry.grade }}级</span>
               </div>
             </div>
             <div class="entry-stats">

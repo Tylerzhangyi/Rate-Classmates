@@ -56,6 +56,12 @@ const routes = [
     name: 'ApplySchool',
     component: () => import('../views/ApplySchool.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/apply-student',
+    name: 'ApplyStudent',
+    component: () => import('../views/ApplyStudent.vue'),
+    meta: { requiresAuth: true }
   }
 ]
 

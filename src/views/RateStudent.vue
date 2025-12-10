@@ -11,7 +11,6 @@
         <div class="student-info-card">
           <p><strong>学校：</strong>{{ student.school_name }}</p>
           <p><strong>年级：</strong>{{ student.grade }}</p>
-          <p><strong>班级：</strong>{{ student.class_no }}</p>
         </div>
 
         <form @submit.prevent="handleSubmit">
@@ -102,11 +101,6 @@ function handleSubmit() {
   
   if (!form.value.score) {
     error.value = '请选择评分等级'
-    return
-  }
-
-  if (student.value.id === authStore.currentUser.id) {
-    error.value = '不能为自己评分'
     return
   }
 

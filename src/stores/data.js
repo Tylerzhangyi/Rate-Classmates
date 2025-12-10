@@ -143,13 +143,26 @@ export const useDataStore = defineStore('data', () => {
     {
       id: '1',
       applicant_id: '1',
-      applicant_name: '张三',
-      applicant_account: 'student001',
       school_name: '浙江大学',
       contact: 'zhangsan@example.com',
       reason: '希望添加我们学校',
       status: 'pending',
       created_at: '2024-01-25T10:00:00Z'
+    }
+  ])
+
+  // 模拟学生申请数据
+  const studentApplications = ref([
+    {
+      id: '1',
+      applicant_id: '2',
+      student_name: '新同学',
+      school_id: '1',
+      school_name: '北京大学',
+      grade: 2023,
+      reason: '补充我们班同学信息',
+      status: 'pending',
+      created_at: '2024-02-01T10:00:00Z'
     }
   ])
 
@@ -224,12 +237,31 @@ export const useDataStore = defineStore('data', () => {
     return newApplication
   }
 
+  // 添加学生申请
+  function addStudentApplication(application) {
+    const newApplication = {
+      id: String(studentApplications.value.length + 1),
+      ...application,
+      created_at: new Date().toISOString()
+    }
+    studentApplications.value.push(newApplication)
+    return newApplication
+  }
+
   // 获取学校申请列表
   function getSchoolApplications(status = null) {
     if (status) {
       return schoolApplications.value.filter(app => app.status === status)
     }
     return schoolApplications.value
+  }
+
+  // 获取学生申请列表
+  function getStudentApplications(status = null) {
+    if (status) {
+      return studentApplications.value.filter(app => app.status === status)
+    }
+    return studentApplications.value
   }
 
   // 更新学校申请状态
@@ -247,6 +279,37 @@ export const useDataStore = defineStore('data', () => {
         if (!existingSchool) {
           addSchool({
             school_name: application.school_name
+          })
+        }
+      }
+      return application
+    }
+    return null
+  }
+
+  // 更新学生申请状态
+  function updateStudentApplicationStatus(applicationId, status) {
+    const application = studentApplications.value.find(app => app.id === applicationId)
+    if (application) {
+      application.status = status
+      application.updated_at = new Date().toISOString()
+
+      // 审核通过时，若学生不存在则添加
+      if (status === 'approved') {
+        const exists = students.value.find(
+          s =>
+            s.name === application.student_name &&
+            s.school_id === application.school_id &&
+            s.grade === application.grade
+        )
+        if (!exists) {
+          const school = schools.value.find(s => s.id === application.school_id)
+          addStudent({
+            school_id: application.school_id,
+            school_name: school ? school.school_name : application.school_name || '',
+            name: application.student_name,
+            grade: application.grade,
+            class_no: null
           })
         }
       }
@@ -305,13 +368,17 @@ export const useDataStore = defineStore('data', () => {
     ratings,
     badges,
     studentBadges,
+    studentApplications,
     schoolApplications,
     addRating,
     addStudent,
     addSchool,
     addSchoolApplication,
+    addStudentApplication,
     getSchoolApplications,
+    getStudentApplications,
     updateSchoolApplicationStatus,
+    updateStudentApplicationStatus,
     getStudentRatings,
     getLeaderboard
   }

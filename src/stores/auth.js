@@ -10,22 +10,14 @@ export const useAuthStore = defineStore('auth', () => {
       account: 'test',
       password: 'test',
       name: '张三',
-      school_id: '1',
-      school_name: '北京大学',
-      grade: 2021,
-      class_no: 1,
-      role: 'student'
+      role: 'user'
     },
     {
       id: '2',
       account: 'student002',
       password: '123456',
       name: '李四',
-      school_id: '2',
-      school_name: '清华大学',
-      grade: 2022,
-      class_no: 2,
-      role: 'student'
+      role: 'user'
     },
     {
       id: 'admin',
@@ -55,7 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
     const newUser = {
       id: String(users.value.length + 1),
       ...userData,
-      role: 'student', // 默认角色为学生
+      role: 'user', // 默认角色为普通用户
       created_at: new Date().toISOString()
     }
     users.value.push(newUser)

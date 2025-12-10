@@ -14,7 +14,7 @@
                 v-model="form.account" 
                 type="text" 
                 required 
-                placeholder="账号（学号或邮箱）"
+                placeholder="账号（邮箱或学号）"
                 class="register__input register__input-with-icon"
               />
               <i class="fas fa-user register__input-icon"></i>
@@ -36,40 +36,9 @@
                 v-model="form.name" 
                 type="text" 
                 required 
-                placeholder="姓名"
+                placeholder="姓名（用于展示评分者昵称）"
                 class="register__input"
               />
-            </div>
-
-            <div class="register__box">
-              <select v-model="form.school_id" required class="register__input register__select">
-                <option value="">请选择学校</option>
-                <option v-for="school in schools" :key="school.id" :value="school.id">
-                  {{ school.school_name }}
-                </option>
-              </select>
-            </div>
-
-            <div class="register__row">
-              <div class="register__box">
-                <input 
-                  v-model.number="form.grade" 
-                  type="number" 
-                  required 
-                  placeholder="年级"
-                  class="register__input"
-                />
-              </div>
-
-              <div class="register__box">
-                <input 
-                  v-model.number="form.class_no" 
-                  type="number" 
-                  required 
-                  placeholder="班级"
-                  class="register__input"
-                />
-              </div>
             </div>
           </div>
 
@@ -95,60 +64,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { useDataStore } from '../stores/data'
 
 const router = useRouter()
 const authStore = useAuthStore()
-const dataStore = useDataStore()
 
 const form = ref({
   account: '',
   password: '',
-  name: '',
-  school_id: '',
-  grade: null,
-  class_no: null
+  name: ''
 })
 
 const error = ref('')
 const success = ref('')
-const schools = ref([])
-
-onMounted(() => {
-  schools.value = dataStore.schools
-})
 
 function handleRegister() {
   error.value = ''
   success.value = ''
-  
-  const selectedSchool = dataStore.schools.find(s => s.id === form.value.school_id)
-  if (!selectedSchool) {
-    error.value = '请选择学校'
-    return
-  }
-  
-  const userData = {
-    ...form.value,
-    school_name: selectedSchool.school_name
-  }
-  
-  const result = authStore.register(userData)
+
+  const result = authStore.register(form.value)
   if (result.success) {
     success.value = result.message
-    // 同时添加到学生列表
-    dataStore.addStudent({
-      school_id: form.value.school_id,
-      school_name: selectedSchool.school_name,
-      name: form.value.name,
-      grade: form.value.grade,
-      class_no: form.value.class_no
-    })
     setTimeout(() => {
-      router.push('/students')
+      router.push('/login')
     }, 1000)
   } else {
     error.value = result.message

@@ -22,14 +22,20 @@
               <strong>年级：</strong>{{ student.grade }}
             </div>
             <div class="info-item">
-              <strong>班级：</strong>{{ student.class_no }}
-            </div>
-            <div class="info-item">
               <strong>平均分：</strong>{{ student.avg_score || '暂无' }}
             </div>
             <div class="info-item">
               <strong>评分数量：</strong>{{ student.rating_count }}
             </div>
+          <div class="info-item">
+            <strong>徽章：</strong>
+            <template v-if="badges.length">
+              <span class="badge-chip" v-for="badge in badges" :key="badge.id">
+                {{ badge.badge_name || badge.name }}
+              </span>
+            </template>
+            <span v-else class="badge-chip badge-chip--empty">暂无徽章</span>
+          </div>
           </div>
           <div class="profile-actions">
             <router-link :to="`/rate/${student.id}`" class="btn btn-primary">评分</router-link>
@@ -93,6 +99,11 @@ const comments = ref([])
 const loading = ref(true)
 const commentSortBy = ref('time')
 const commentSortOrder = ref('desc')
+
+const badges = computed(() => {
+  if (!student.value) return []
+  return dataStore.studentBadges.filter(b => b.student_id === student.value.id)
+})
 
 onMounted(() => {
   loadStudent()
@@ -169,6 +180,21 @@ function formatTime(timeString) {
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   color: #fff;
+}
+
+.badge-chip {
+  display: inline-block;
+  padding: 4px 8px;
+  margin-right: 6px;
+  margin-top: 6px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 12px;
+}
+
+.badge-chip--empty {
+  opacity: 0.7;
 }
 
 .profile-actions {

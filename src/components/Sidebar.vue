@@ -17,6 +17,14 @@
         <span>个人中心</span>
       </router-link>
       <router-link 
+        to="/apply-student" 
+        class="sidebar__item" 
+        active-class="sidebar__item--active"
+      >
+        <i class="fas fa-user-plus sidebar__icon"></i>
+        <span>申请添加学生</span>
+      </router-link>
+      <router-link 
         v-if="!authStore.isAdmin"
         to="/apply-school" 
         class="sidebar__item" 

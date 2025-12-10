@@ -25,12 +25,8 @@
             
             <div class="application-details">
               <div class="detail-row">
-                <span class="detail-label">申请人：</span>
-                <span class="detail-value">{{ application.applicant_name }}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">申请人账号：</span>
-                <span class="detail-value">{{ application.applicant_account }}</span>
+                <span class="detail-label">申请人ID：</span>
+                <span class="detail-value">{{ application.applicant_id }}</span>
               </div>
               <div class="detail-row">
                 <span class="detail-label">联系方式：</span>
@@ -82,8 +78,8 @@
               </div>
               <div class="application-details">
                 <div class="detail-row">
-                  <span class="detail-label">申请人：</span>
-                  <span class="detail-value">{{ application.applicant_name }}</span>
+                  <span class="detail-label">申请人ID：</span>
+                  <span class="detail-value">{{ application.applicant_id }}</span>
                 </div>
                 <div class="detail-row">
                   <span class="detail-label">处理时间：</span>
@@ -107,26 +103,6 @@
             type="text" 
             v-model="form.school_name" 
             placeholder="请输入学校全称"
-            required
-          />
-        </div>
-
-        <div class="input-group">
-          <label>申请人姓名 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="form.applicant_name" 
-            placeholder="请输入您的姓名"
-            required
-          />
-        </div>
-
-        <div class="input-group">
-          <label>申请人学号/账号 <span class="required">*</span></label>
-          <input 
-            type="text" 
-            v-model="form.applicant_account" 
-            placeholder="请输入您的学号或账号"
             required
           />
         </div>
@@ -177,8 +153,6 @@ const authStore = useAuthStore()
 
 const form = ref({
   school_name: '',
-  applicant_name: '',
-  applicant_account: '',
   contact: '',
   reason: ''
 })
@@ -200,11 +174,7 @@ const processedApplications = computed(() => {
 })
 
 onMounted(() => {
-  // 自动填充当前用户信息
-  if (authStore.currentUser) {
-    form.value.applicant_name = authStore.currentUser.name || ''
-    form.value.applicant_account = authStore.currentUser.account || ''
-  }
+  // 页面加载时无需自动填充
 })
 
 function handleSubmit() {
@@ -237,8 +207,6 @@ function handleSubmit() {
 
   const application = {
     applicant_id: authStore.currentUser.id,
-    applicant_name: form.value.applicant_name,
-    applicant_account: form.value.applicant_account,
     school_name: form.value.school_name.trim(),
     contact: form.value.contact,
     reason: form.value.reason || '',
@@ -251,8 +219,6 @@ function handleSubmit() {
   // 重置表单
   form.value = {
     school_name: '',
-    applicant_name: authStore.currentUser.name || '',
-    applicant_account: authStore.currentUser.account || '',
     contact: '',
     reason: ''
   }

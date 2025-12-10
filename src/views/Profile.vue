@@ -13,54 +13,6 @@
           <div class="info-item">
             <strong>账号：</strong>{{ currentUser.account }}
           </div>
-          <div class="info-item">
-            <strong>学校：</strong>{{ currentUser.school_name }}
-          </div>
-          <div class="info-item">
-            <strong>年级：</strong>{{ currentUser.grade }}
-          </div>
-          <div class="info-item">
-            <strong>班级：</strong>{{ currentUser.class_no }}
-          </div>
-        </div>
-      </div>
-
-      <!-- 我的统计 -->
-      <div class="profile-section">
-        <h2>我的统计</h2>
-        <div v-if="myStats" class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">{{ myStats.avg_score || '暂无' }}</div>
-            <div class="stat-label">平均分</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ myStats.rating_count || 0 }}</div>
-            <div class="stat-label">收到评分</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ myStats.dominant_rating_label || '暂无' }}</div>
-            <div class="stat-label">主要等级</div>
-          </div>
-        </div>
-        <div v-else class="empty-state">
-          <p>暂无统计数据</p>
-        </div>
-      </div>
-
-      <!-- 我的徽章 -->
-      <div class="profile-section">
-        <h2>我的徽章</h2>
-        <div v-if="myBadges.length === 0" class="empty-state">
-          <p>暂无徽章</p>
-        </div>
-        <div v-else class="badges-grid">
-          <div v-for="badge in myBadges" :key="badge.id" class="badge-card">
-            <div class="badge-icon">🏆</div>
-            <div class="badge-info">
-              <div class="badge-name">{{ badge.badge_name }}</div>
-              <div class="badge-period">{{ badge.period }}</div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -105,20 +57,6 @@ const authStore = useAuthStore()
 const dataStore = useDataStore()
 
 const currentUser = computed(() => authStore.currentUser)
-
-const myStats = computed(() => {
-  const student = dataStore.students.find(s => s.id === currentUser.value.id)
-  if (!student) return null
-  
-  return {
-    ...student,
-    dominant_rating_label: getRatingLabel(student.dominant_rating)
-  }
-})
-
-const myBadges = computed(() => {
-  return dataStore.studentBadges.filter(b => b.student_id === currentUser.value.id)
-})
 
 const myRatings = computed(() => {
   return dataStore.ratings.filter(r => r.rater_id === currentUser.value.id)

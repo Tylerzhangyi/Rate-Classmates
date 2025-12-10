@@ -25,10 +25,6 @@
             <label>年级</label>
             <input v-model.number="filters.grade" type="number" placeholder="如：2021" />
           </div>
-          <div class="input-group" style="flex: 1;">
-            <label>班级</label>
-            <input v-model.number="filters.class_no" type="number" placeholder="如：1" />
-          </div>
         </div>
         <div class="filter-row">
           <div class="input-group" style="flex: 1;">
@@ -80,9 +76,17 @@
         <div class="student-info">
           <p><strong>学校：</strong>{{ student.school_name }}</p>
           <p><strong>年级：</strong>{{ student.grade }}</p>
-          <p><strong>班级：</strong>{{ student.class_no }}</p>
           <p><strong>平均分：</strong>{{ student.avg_score || '暂无' }}</p>
           <p><strong>评分数量：</strong>{{ student.rating_count }}</p>
+          <p>
+            <strong>徽章：</strong>
+            <template v-if="getStudentBadges(student.id).length">
+              <span class="badge-chip" v-for="badge in getStudentBadges(student.id)" :key="badge.id">
+                {{ badge.badge_name || badge.name }}
+              </span>
+            </template>
+            <span v-else class="badge-chip badge-chip--empty">暂无徽章</span>
+          </p>
         </div>
         <div class="student-actions">
           <router-link :to="`/student/${student.id}`" class="btn btn-secondary">查看详情</router-link>
@@ -109,7 +113,6 @@ const filtersExpanded = ref(false)
 const filters = ref({
   school_id: '',
   grade: null,
-  class_no: null,
   name: '',
   min_score: null,
   max_score: null
@@ -135,9 +138,6 @@ const filteredStudents = computed(() => {
   }
   if (filters.value.grade) {
     result = result.filter(s => s.grade === filters.value.grade)
-  }
-  if (filters.value.class_no) {
-    result = result.filter(s => s.class_no === filters.value.class_no)
   }
   if (filters.value.name) {
     result = result.filter(s => 
@@ -186,11 +186,14 @@ function getRatingLabel(score) {
   return labels[score] || '暂无'
 }
 
+function getStudentBadges(studentId) {
+  return dataStore.studentBadges.filter(b => b.student_id === studentId)
+}
+
 function resetFilters() {
   filters.value = {
     school_id: '',
     grade: null,
-    class_no: null,
     name: '',
     min_score: null,
     max_score: null
@@ -329,6 +332,21 @@ function resetFilters() {
   color: rgba(255, 255, 255, 0.9);
   font-size: 14px;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.badge-chip {
+  display: inline-block;
+  padding: 4px 8px;
+  margin-right: 6px;
+  margin-bottom: 4px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 12px;
+}
+
+.badge-chip--empty {
+  opacity: 0.7;
 }
 
 .student-actions {

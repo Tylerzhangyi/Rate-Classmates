@@ -4,4 +4,7 @@ dist
 *.log
 .env
 .env.local
-
+.cursor
+.cursor/rules
+presentation-cn.md
+.gitignore

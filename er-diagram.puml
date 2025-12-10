@@ -1,16 +1,21 @@
 @startuml RateMyClassmateER
 title Rate My Classmate 平台 ER 图
 
+entity User {
+  *user_id : UUID
+  ---
+  account : string
+  password : string
+  role : enum
+  created_at : datetime
+}
+
 entity Student {
   *student_id : UUID
   ---
   school_id : UUID
   name : string
   grade : int
-  class_no : int
-  account : string
-  password_hash : string
-  role : enum
   created_at : datetime
 }
 
@@ -87,8 +92,6 @@ entity SchoolApplication {
   *application_id : UUID
   ---
   applicant_id : UUID
-  applicant_name : string
-  applicant_account : string
   school_name : string
   contact : string
   reason : text
@@ -97,18 +100,31 @@ entity SchoolApplication {
   updated_at : datetime
 }
 
+entity StudentApplication {
+  *application_id : UUID
+  ---
+  applicant_id : UUID
+  student_name : string
+  school_id : UUID
+  grade : int
+  reason : text
+  status : enum
+  created_at : datetime
+  updated_at : datetime
+}
+
 School ||--o{ Student
-Student ||--o{ Rating
-Student ||--o{ Rating
+User ||--o{ Rating : rater
+Student ||--o{ Rating : target
 Student ||--|| RatingSummary
-Rating ||--|| RatingSummary
 Student ||--o{ StudentBadge
 Badge ||--o{ StudentBadge
 School ||--o{ SchoolBadge
 Badge ||--o{ SchoolBadge
 Leaderboard ||--o{ LeaderboardEntry
 Student ||--o{ LeaderboardEntry
-Student ||--o{ SchoolApplication
+User ||--o{ SchoolApplication
+User ||--o{ StudentApplication
 
 @enduml
 
