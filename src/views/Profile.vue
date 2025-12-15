@@ -49,7 +49,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { useDataStore } from '../stores/data'
 
@@ -57,9 +57,13 @@ const authStore = useAuthStore()
 const dataStore = useDataStore()
 
 const currentUser = computed(() => authStore.currentUser)
+const myRatings = ref([])
 
-const myRatings = computed(() => {
-  return dataStore.ratings.filter(r => r.rater_id === currentUser.value.id)
+onMounted(async () => {
+  if (!currentUser.value) return
+  await dataStore.loadInitial()
+  const list = await dataStore.fetchMyRatings(currentUser.value.id)
+  myRatings.value = list
 })
 
 function getRatingLabel(score) {

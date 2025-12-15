@@ -86,11 +86,10 @@ onMounted(() => {
   }
 })
 
-function handleLogin() {
+async function handleLogin() {
   error.value = ''
-  const result = authStore.login(form.value.account, form.value.password)
+  const result = await authStore.login(form.value.account, form.value.password)
   if (result.success) {
-    // 如果勾选了记住我，保存账号
     if (rememberMe.value) {
       localStorage.setItem('rememberedAccount', form.value.account)
     } else {

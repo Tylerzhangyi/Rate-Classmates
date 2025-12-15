@@ -85,50 +85,44 @@ const ratingLabels = {
   1: '拉完了'
 }
 
-onMounted(() => {
-  loadStudent()
+onMounted(async () => {
+  await dataStore.loadInitial()
+  await loadStudent()
 })
 
-function loadStudent() {
+async function loadStudent() {
   const studentId = route.params.id
-  student.value = dataStore.students.find(s => s.id === studentId)
+  student.value = await dataStore.fetchStudentById(studentId)
   loading.value = false
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   error.value = ''
   success.value = ''
-  
+
   if (!form.value.score) {
     error.value = '请选择评分等级'
     return
   }
-
-  // 检查是否已经评分过
-  const existingRating = dataStore.ratings.find(
-    r => r.rater_id === authStore.currentUser.id && r.target_id === student.value.id
-  )
-  
-  if (existingRating) {
-    error.value = '您已经为该同学评分过了'
+  if (!authStore.currentUser) {
+    error.value = '请先登录'
     return
   }
 
-  const rating = {
-    rater_id: authStore.currentUser.id,
-    rater_name: authStore.currentUser.name,
-    target_id: student.value.id,
-    target_name: student.value.name,
-    score: form.value.score,
-    comment: form.value.comment
+  try {
+    await dataStore.submitRating({
+      rater_id: authStore.currentUser.id,
+      target_id: student.value.id,
+      score: form.value.score,
+      comment: form.value.comment
+    })
+    success.value = '评分提交成功！'
+    setTimeout(() => {
+      router.push(`/student/${student.value.id}`)
+    }, 800)
+  } catch (e) {
+    error.value = e.message
   }
-
-  dataStore.addRating(rating)
-  success.value = '评分提交成功！'
-  
-  setTimeout(() => {
-    router.push(`/student/${student.value.id}`)
-  }, 1500)
 }
 </script>
 

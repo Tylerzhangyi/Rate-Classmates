@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { useDataStore } from '../stores/data'
 
 const routes = [
   {
@@ -70,15 +71,23 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
   authStore.initAuth()
+  const dataStore = useDataStore()
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if ((to.path === '/login' || to.path === '/register') && authStore.isAuthenticated) {
     next('/students')
   } else {
+    if (to.meta.requiresAuth) {
+      try {
+        await dataStore.loadInitial()
+      } catch (e) {
+        // 忽略数据加载错误，页面自行展示提示
+      }
+    }
     next()
   }
 })

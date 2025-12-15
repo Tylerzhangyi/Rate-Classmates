@@ -105,13 +105,18 @@ const badges = computed(() => {
   return dataStore.studentBadges.filter(b => b.student_id === student.value.id)
 })
 
-onMounted(() => {
-  loadStudent()
+onMounted(async () => {
+  await dataStore.loadInitial()
+  await loadStudent()
 })
 
-function loadStudent() {
+async function loadStudent() {
   const studentId = route.params.id
-  student.value = dataStore.students.find(s => s.id === studentId)
+  student.value = await dataStore.fetchStudentById(studentId)
+  await Promise.all([
+    dataStore.fetchStudentRatings(studentId),
+    dataStore.fetchStudentBadges(studentId)
+  ])
   comments.value = dataStore.getStudentRatings(studentId)
   loading.value = false
 }

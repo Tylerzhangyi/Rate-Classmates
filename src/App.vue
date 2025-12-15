@@ -8,12 +8,16 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useAuthStore } from './stores/auth'
 import Sidebar from './components/Sidebar.vue'
 
 const authStore = useAuthStore()
 const isAuthenticated = computed(() => authStore.isAuthenticated)
+
+onMounted(() => {
+  authStore.initAuth()
+})
 </script>
 
 <style>

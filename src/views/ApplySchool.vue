@@ -170,11 +170,12 @@ const pendingApplications = computed(() => {
 // 获取已处理的申请
 const processedApplications = computed(() => {
   const all = dataStore.getSchoolApplications()
-  return all.filter(app => app.status !== 'pending').slice(0, 10) // 只显示最近10条
+  return all.filter(app => app.status !== 'pending').slice(0, 10)
 })
 
-onMounted(() => {
-  // 页面加载时无需自动填充
+onMounted(async () => {
+  await dataStore.loadInitial()
+  await dataStore.fetchSchoolApplications()
 })
 
 function handleSubmit() {
@@ -213,7 +214,7 @@ function handleSubmit() {
     status: 'pending'
   }
 
-  dataStore.addSchoolApplication(application)
+  dataStore.createSchoolApplication(application)
   success.value = '申请提交成功！我们会在审核后通知您。'
   
   // 重置表单
@@ -233,26 +234,24 @@ function handleSubmit() {
 // 管理员审核功能
 function handleApprove(applicationId) {
   processing.value = true
-  const result = dataStore.updateSchoolApplicationStatus(applicationId, 'approved')
-  if (result) {
+  dataStore.updateSchoolApplicationStatus(applicationId, 'approved').then(() => {
     success.value = '申请已批准，学校已添加到系统中'
-    setTimeout(() => {
-      success.value = ''
-    }, 3000)
-  }
-  processing.value = false
+    return dataStore.fetchSchoolApplications()
+  }).finally(() => {
+    processing.value = false
+    setTimeout(() => { success.value = '' }, 3000)
+  })
 }
 
 function handleReject(applicationId) {
   processing.value = true
-  const result = dataStore.updateSchoolApplicationStatus(applicationId, 'rejected')
-  if (result) {
+  dataStore.updateSchoolApplicationStatus(applicationId, 'rejected').then(() => {
     success.value = '申请已拒绝'
-    setTimeout(() => {
-      success.value = ''
-    }, 3000)
-  }
-  processing.value = false
+    return dataStore.fetchSchoolApplications()
+  }).finally(() => {
+    processing.value = false
+    setTimeout(() => { success.value = '' }, 3000)
+  })
 }
 
 function getStatusText(status) {

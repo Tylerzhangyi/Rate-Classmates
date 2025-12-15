@@ -69,8 +69,8 @@
               </div>
             </div>
             <div class="entry-actions">
-              <router-link :to="`/student/${entry.id}`" class="btn btn-secondary btn-sm">查看</router-link>
-              <router-link :to="`/rate/${entry.id}`" class="btn btn-primary btn-sm">评分</router-link>
+              <button class="btn btn-secondary btn-sm" @click="goStudent(entry.student_id || entry.id)">查看</button>
+              <button class="btn btn-primary btn-sm" @click="goRate(entry.student_id || entry.id)">评分</button>
             </div>
           </div>
         </div>
@@ -97,7 +97,7 @@
             <div class="entry-info">
               <div class="entry-name">{{ entry.school_name }}</div>
               <div class="entry-details">
-                <span>{{ entry.students.length }} 名学生</span>
+                <span>评分数：{{ entry.rating_count }}</span>
               </div>
             </div>
             <div class="entry-stats">
@@ -105,6 +105,9 @@
                 <span class="stat-label">学校平均分</span>
                 <span class="stat-value">{{ entry.avg_score }}</span>
               </div>
+            </div>
+            <div class="entry-actions">
+              <button class="btn btn-secondary btn-sm" @click="goSchool(entry)">查看学生</button>
             </div>
           </div>
         </div>
@@ -114,21 +117,44 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDataStore } from '../stores/data'
 
 const dataStore = useDataStore()
+const router = useRouter()
 
 const activeTab = ref('all')
 const period = ref('all')
+const allLeaderboard = ref([])
+const schoolLeaderboard = ref([])
 
-const allLeaderboard = computed(() => {
-  return dataStore.getLeaderboard('all', period.value)
+onMounted(async () => {
+  await dataStore.loadInitial()
+  await loadLeaderboards()
 })
 
-const schoolLeaderboard = computed(() => {
-  return dataStore.getLeaderboard('school', period.value)
-})
+watch([activeTab, period], loadLeaderboards)
+
+async function loadLeaderboards() {
+  if (activeTab.value === 'school') {
+    schoolLeaderboard.value = await dataStore.getLeaderboard('school', period.value)
+  } else {
+    allLeaderboard.value = await dataStore.getLeaderboard('all', period.value)
+  }
+}
+
+function goStudent(studentId) {
+  router.push(`/student/${studentId}`)
+}
+
+function goRate(studentId) {
+  router.push(`/rate/${studentId}`)
+}
+
+function goSchool(entry) {
+  router.push({ path: '/students', query: { school_id: entry.school_id } })
+}
 
 function getRatingLabel(score) {
   const labels = {

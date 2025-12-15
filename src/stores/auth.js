@@ -1,59 +1,46 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import client from '../api/client'
 
 export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref(null)
-  const users = ref([
-    // 模拟用户数据
-    {
-      id: '1',
-      account: 'test',
-      password: 'test',
-      name: '张三',
-      role: 'user'
-    },
-    {
-      id: '2',
-      account: 'student002',
-      password: '123456',
-      name: '李四',
-      role: 'user'
-    },
-    {
-      id: 'admin',
-      account: 'admin',
-      password: 'admin123',
-      name: '管理员',
-      role: 'admin'
-    }
-  ])
-
   const isAuthenticated = computed(() => currentUser.value !== null)
   const isAdmin = computed(() => currentUser.value?.role === 'admin')
+  const loading = ref(false)
+  const error = ref('')
 
-  function login(account, password) {
-    const user = users.value.find(
-      u => (u.account === account || u.account.includes(account)) && u.password === password
-    )
-    if (user) {
-      currentUser.value = { ...user }
+  async function login(account, password) {
+    loading.value = true
+    error.value = ''
+    try {
+      const res = await client.post('auth/login', { account, password })
+      const user = res.data.data
+      currentUser.value = { ...user, name: user.account, id: user.user_id }
       localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
-      return { success: true, message: '登录成功' }
+      return { success: true, message: res.data.message }
+    } catch (e) {
+      error.value = e.message
+      return { success: false, message: e.message }
+    } finally {
+      loading.value = false
     }
-    return { success: false, message: '账号或密码错误' }
   }
 
-  function register(userData) {
-    const newUser = {
-      id: String(users.value.length + 1),
-      ...userData,
-      role: 'user', // 默认角色为普通用户
-      created_at: new Date().toISOString()
+  async function register(account, password) {
+    loading.value = true
+    error.value = ''
+    try {
+      const res = await client.post('auth/register', { account, password })
+      const user = res.data.data
+      currentUser.value = { ...user, name: user.account, id: user.user_id }
+      localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
+      return { success: true, message: res.data.message }
+    } catch (e) {
+      error.value = e.message
+      return { success: false, message: e.message }
+    } finally {
+      loading.value = false
     }
-    users.value.push(newUser)
-    currentUser.value = { ...newUser }
-    localStorage.setItem('currentUser', JSON.stringify(currentUser.value))
-    return { success: true, message: '注册成功' }
   }
 
   function logout() {
@@ -70,9 +57,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     currentUser,
-    users,
     isAuthenticated,
     isAdmin,
+    loading,
+    error,
     login,
     register,
     logout,

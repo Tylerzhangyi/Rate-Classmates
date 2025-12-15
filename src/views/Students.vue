@@ -121,7 +121,8 @@ const filters = ref({
 const sortBy = ref('avg_score')
 const sortOrder = ref('desc')
 
-onMounted(() => {
+onMounted(async () => {
+  await dataStore.loadInitial()
   schools.value = dataStore.schools
 })
 

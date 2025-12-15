@@ -80,11 +80,11 @@ const form = ref({
 const error = ref('')
 const success = ref('')
 
-function handleRegister() {
+async function handleRegister() {
   error.value = ''
   success.value = ''
 
-  const result = authStore.register(form.value)
+  const result = await authStore.register(form.value.account, form.value.password)
   if (result.success) {
     success.value = result.message
     setTimeout(() => {

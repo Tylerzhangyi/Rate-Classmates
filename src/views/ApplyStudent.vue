@@ -184,8 +184,10 @@ const processedApplications = computed(() => {
   return all.filter(app => app.status !== 'pending').slice(0, 10)
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await dataStore.loadInitial()
   schools.value = dataStore.schools
+  await dataStore.fetchStudentApplications()
 })
 
 function handleSubmit() {
@@ -236,7 +238,7 @@ function handleSubmit() {
     status: 'pending'
   }
 
-  dataStore.addStudentApplication(application)
+  dataStore.createStudentApplication(application)
   success.value = '申请提交成功！审核通过后会添加该学生档案。'
   form.value = {
     student_name: '',
@@ -249,14 +251,20 @@ function handleSubmit() {
 
 function handleApprove(id) {
   processing.value = true
-  dataStore.updateStudentApplicationStatus(id, 'approved')
-  processing.value = false
+  dataStore.updateStudentApplicationStatus(id, 'approved').then(() => {
+    return dataStore.fetchStudentApplications()
+  }).finally(() => {
+    processing.value = false
+  })
 }
 
 function handleReject(id) {
   processing.value = true
-  dataStore.updateStudentApplicationStatus(id, 'rejected')
-  processing.value = false
+  dataStore.updateStudentApplicationStatus(id, 'rejected').then(() => {
+    return dataStore.fetchStudentApplications()
+  }).finally(() => {
+    processing.value = false
+  })
 }
 
 function getStatusText(status) {
