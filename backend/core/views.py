@@ -22,7 +22,7 @@ from .models import (
     StudentBadge,
     User,
 )
-from .utils import allow_methods, api_response, parse_json
+from .utils import allow_methods, api_response, parse_json, require_auth, require_admin
 
 
 def _user_payload(user: User) -> dict[str, Any]:
@@ -57,7 +57,38 @@ def login_view(request: HttpRequest):
         user = User.objects.get(account=account, password=password)
     except User.DoesNotExist:
         return api_response(401, "账号或密码错误", status=401)
+    # 将用户信息存入 session
+    request.session['user_id'] = str(user.user_id)
+    request.session['account'] = user.account
+    request.session['role'] = user.role
+    request.session.set_expiry(86400 * 7)  # 7天过期
+    # 确保 session 被保存
+    request.session.save()
     return api_response(200, "登录成功", _user_payload(user))
+
+
+@csrf_exempt
+@allow_methods(["POST"])
+def logout_view(request: HttpRequest):
+    """登出：清除 session（不需要认证，因为用户可能已经登出）"""
+    request.session.flush()
+    return api_response(200, "登出成功")
+
+
+@csrf_exempt
+@allow_methods(["GET"])
+def check_auth_view(request: HttpRequest):
+    """
+    检查当前登录状态（用于调试）
+    """
+    if hasattr(request, 'session') and request.session and 'user_id' in request.session:
+        return api_response(200, "已登录", {
+            "user_id": request.session.get('user_id'),
+            "account": request.session.get('account'),
+            "role": request.session.get('role'),
+        })
+    else:
+        return api_response(401, "未登录", None)
 
 
 def school_list(request: HttpRequest):
@@ -104,8 +135,8 @@ def student_ratings(request: HttpRequest, student_id: uuid.UUID):
     ratings = (
         Rating.objects.filter(target_id=student_id)
         .select_related("rater")
-        .order_by("-created_at")
-        .values("rating_id", "rater_id", "rater__account", "score", "comment", "created_at")
+        .order_by("-updated_at", "-created_at")
+        .values("rating_id", "rater_id", "rater__account", "score", "comment", "created_at", "updated_at")
     )
     result = [
         {
@@ -115,7 +146,7 @@ def student_ratings(request: HttpRequest, student_id: uuid.UUID):
             "target_id": str(student_id),
             "score": item["score"],
             "comment": item["comment"],
-            "created_at": item["created_at"].isoformat(),
+            "created_at": item["updated_at"].isoformat() if item.get("updated_at") else item["created_at"].isoformat(),
         }
         for item in ratings
     ]
@@ -132,7 +163,7 @@ def ratings_view(request: HttpRequest):
         ratings = (
             Rating.objects.filter(rater_id=rater_id)
             .select_related("target")
-            .order_by("-created_at")
+            .order_by("-updated_at", "-created_at")
             .values(
                 "rating_id",
                 "target_id",
@@ -140,6 +171,7 @@ def ratings_view(request: HttpRequest):
                 "score",
                 "comment",
                 "created_at",
+                "updated_at",
             )
         )
         data = [
@@ -149,20 +181,24 @@ def ratings_view(request: HttpRequest):
                 "target_name": r["target__name"],
                 "score": r["score"],
                 "comment": r["comment"],
-                "created_at": r["created_at"].isoformat(),
+                "created_at": r["updated_at"].isoformat() if r.get("updated_at") else r["created_at"].isoformat(),
             }
             for r in ratings
         ]
         return api_response(data=data)
 
-    # POST 评分创建/更新
+    # POST 评分创建/更新 - 需要认证
+    # 检查 session 是否存在
+    if not hasattr(request, 'session') or not request.session or 'user_id' not in request.session:
+        return api_response(401, "未登录，请先登录", status=401)
+    
     payload = parse_json(request)
-    rater_id = payload.get("rater_id")
+    rater_id = request.session['user_id']  # 从 session 获取当前登录用户
     target_id = payload.get("target_id")
     score = payload.get("score")
     comment = payload.get("comment", "")
-    if not (rater_id and target_id and score):
-        return api_response(400, "rater_id, target_id, score 必填", status=400)
+    if not (target_id and score):
+        return api_response(400, "target_id, score 必填", status=400)
     try:
         rater = User.objects.get(user_id=rater_id)
         target = Student.objects.get(student_id=target_id)
@@ -173,7 +209,7 @@ def ratings_view(request: HttpRequest):
         rating, _created = Rating.objects.update_or_create(
             rater=rater,
             target=target,
-            defaults={"score": score, "comment": comment},
+            defaults={"score": score, "comment": comment, "updated_at": timezone.now()},
         )
         # 更新汇总
         agg = Rating.objects.filter(target=target).aggregate(
@@ -254,15 +290,19 @@ def school_applications_view(request: HttpRequest):
         ]
         return api_response(data=data)
 
-    # POST 创建申请
+    # POST 创建申请 - 需要认证
+    if 'user_id' not in request.session:
+        return api_response(401, "未登录，请先登录", status=401)
+    
     payload = parse_json(request)
-    required = ["applicant_id", "school_name", "contact"]
+    applicant_id = request.session['user_id']  # 从 session 获取当前登录用户
+    required = ["school_name", "contact"]
     if any(not payload.get(k) for k in required):
         return api_response(400, "缺少必填字段", status=400)
     try:
-        applicant = User.objects.get(user_id=payload["applicant_id"])
+        applicant = User.objects.get(user_id=applicant_id)
     except User.DoesNotExist:
-        return api_response(404, "applicant 不存在", status=404)
+        return api_response(404, "用户不存在", status=404)
     app = SchoolApplication.objects.create(
         applicant=applicant,
         school_name=payload["school_name"],
@@ -274,6 +314,7 @@ def school_applications_view(request: HttpRequest):
 
 @csrf_exempt
 @allow_methods(["PATCH"])
+@require_admin
 def school_application_detail_view(request: HttpRequest, application_id: uuid.UUID):
     try:
         app = SchoolApplication.objects.get(application_id=application_id)
@@ -326,16 +367,20 @@ def student_applications_view(request: HttpRequest):
         ]
         return api_response(data=data)
 
-    # POST 创建申请
+    # POST 创建申请 - 需要认证
+    if 'user_id' not in request.session:
+        return api_response(401, "未登录，请先登录", status=401)
+    
     payload = parse_json(request)
-    required = ["applicant_id", "student_name", "school_id", "grade"]
+    applicant_id = request.session['user_id']  # 从 session 获取当前登录用户
+    required = ["student_name", "school_id", "grade"]
     if any(not payload.get(k) for k in required):
         return api_response(400, "缺少必填字段", status=400)
     try:
-        applicant = User.objects.get(user_id=payload["applicant_id"])
+        applicant = User.objects.get(user_id=applicant_id)
         school = School.objects.get(school_id=payload["school_id"])
     except (User.DoesNotExist, School.DoesNotExist):
-        return api_response(404, "applicant 或 school 不存在", status=404)
+        return api_response(404, "用户或学校不存在", status=404)
     app = StudentApplication.objects.create(
         applicant=applicant,
         student_name=payload["student_name"],
@@ -348,6 +393,7 @@ def student_applications_view(request: HttpRequest):
 
 @csrf_exempt
 @allow_methods(["PATCH"])
+@require_admin
 def student_application_detail_view(request: HttpRequest, application_id: uuid.UUID):
     try:
         app = StudentApplication.objects.select_related("school").get(application_id=application_id)
@@ -385,6 +431,7 @@ def leaderboard_view(request: HttpRequest):
     if lb_type == "school":
         data = (
             Student.objects.select_related("school", "rating_summary")
+            .filter(rating_summary__rating_count__gt=0)  # 只统计有评分的学生
             .values("school_id", "school__school_name")
             .annotate(
                 total_score=Sum(F("rating_summary__avg_score") * F("rating_summary__rating_count")),

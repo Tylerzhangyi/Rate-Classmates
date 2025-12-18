@@ -43,9 +43,23 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function logout() {
-    currentUser.value = null
-    localStorage.removeItem('currentUser')
+  async function logout() {
+    loading.value = true
+    error.value = ''
+    try {
+      await client.post('auth/logout')
+      currentUser.value = null
+      localStorage.removeItem('currentUser')
+      return { success: true, message: '登出成功' }
+    } catch (e) {
+      // 即使后端登出失败，也清除前端状态
+      currentUser.value = null
+      localStorage.removeItem('currentUser')
+      error.value = e.message
+      return { success: false, message: e.message }
+    } finally {
+      loading.value = false
+    }
   }
 
   function initAuth() {

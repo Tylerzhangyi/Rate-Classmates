@@ -81,3 +81,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Session 配置
+SESSION_COOKIE_NAME = "sessionid"
+SESSION_COOKIE_AGE = 86400 * 7  # 7天
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"  # 对于同站请求，Lax 可以工作
+SESSION_SAVE_EVERY_REQUEST = False
+SESSION_COOKIE_SECURE = False  # 开发环境设为 False（localhost），生产环境应设为 True（需要 HTTPS）
+# 注意：localhost:5173 到 127.0.0.1:8000 被视为跨域，但 SameSite=Lax 在大多数浏览器中可以工作
+

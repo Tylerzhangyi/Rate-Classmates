@@ -38,7 +38,8 @@
           <div 
             v-for="(entry, index) in allLeaderboard" 
             :key="entry.id"
-            :class="['leaderboard-item', { top3: index < 3 }]"
+            :class="['leaderboard-item', 'fade-in-item', { top3: index < 3 }]"
+            :style="{ animationDelay: `${index * 0.08}s` }"
           >
             <div class="rank">
               <i v-if="index === 0" class="fas fa-medal rank-icon rank-gold"></i>
@@ -86,7 +87,8 @@
           <div 
             v-for="(entry, index) in schoolLeaderboard" 
             :key="entry.school_id"
-            :class="['leaderboard-item', { top3: index < 3 }]"
+            :class="['leaderboard-item', 'fade-in-item', { top3: index < 3 }]"
+            :style="{ animationDelay: `${index * 0.08}s` }"
           >
             <div class="rank">
               <i v-if="index === 0" class="fas fa-medal rank-icon rank-gold"></i>
@@ -153,7 +155,9 @@ function goRate(studentId) {
 }
 
 function goSchool(entry) {
-  router.push({ path: '/students', query: { school_id: entry.school_id } })
+  if (entry.school_id) {
+    router.push(`/school/${entry.school_id}/students`)
+  }
 }
 
 function getRatingLabel(score) {

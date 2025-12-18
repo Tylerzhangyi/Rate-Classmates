@@ -23,8 +23,14 @@ const routes = [
     component: () => import('../views/ForgotPassword.vue')
   },
   {
-    path: '/students',
-    name: 'Students',
+    path: '/schools',
+    name: 'Schools',
+    component: () => import('../views/Schools.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/school/:schoolId/students',
+    name: 'SchoolStudents',
     component: () => import('../views/Students.vue'),
     meta: { requiresAuth: true }
   },
@@ -73,13 +79,17 @@ const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
-  authStore.initAuth()
   const dataStore = useDataStore()
+  
+  // 如果目标路径是登录页，不恢复认证状态（避免登出后立即恢复）
+  if (to.path !== '/login' && to.path !== '/register') {
+    authStore.initAuth()
+  }
   
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login')
   } else if ((to.path === '/login' || to.path === '/register') && authStore.isAuthenticated) {
-    next('/students')
+    next('/schools')
   } else {
     if (to.meta.requiresAuth) {
       try {

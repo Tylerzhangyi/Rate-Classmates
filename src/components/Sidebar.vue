@@ -1,12 +1,15 @@
 <template>
   <aside class="sidebar">
     <div class="sidebar__header">
-      <h2 class="sidebar__logo">Rate My Classmate</h2>
+      <div class="sidebar__logo-container">
+        <img src="/images/favicon.png" alt="Logo" class="sidebar__logo-icon" />
+        <h2 class="sidebar__logo">Rate My Classmate</h2>
+      </div>
     </div>
     <nav class="sidebar__nav">
-      <router-link to="/students" class="sidebar__item" active-class="sidebar__item--active">
-        <i class="fas fa-users sidebar__icon"></i>
-        <span>学生列表</span>
+      <router-link to="/schools" class="sidebar__item" active-class="sidebar__item--active">
+        <i class="fas fa-building sidebar__icon"></i>
+        <span>评分大厅</span>
       </router-link>
       <router-link to="/leaderboard" class="sidebar__item" active-class="sidebar__item--active">
         <i class="fas fa-trophy sidebar__icon"></i>
@@ -59,9 +62,11 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-function handleLogout() {
-  authStore.logout()
-  router.push('/login')
+async function handleLogout() {
+  // 关键：必须等待 logout 完成（或至少先清理本地登录态），否则路由守卫会认为仍已登录，
+  // 从 /login 立刻重定向回 /schools，造成“退出后先回大厅、再点一下才回登录页”的现象。
+  await authStore.logout()
+  await router.replace('/login')
 }
 </script>
 
@@ -80,11 +85,37 @@ function handleLogout() {
   flex-direction: column;
   z-index: 100;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  animation: slideInLeft 0.4s ease-out;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 .sidebar__header {
   padding: 24px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.sidebar__logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar__logo-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.5));
+  flex-shrink: 0;
 }
 
 .sidebar__logo {
@@ -93,6 +124,7 @@ function handleLogout() {
   color: #fff;
   margin: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  line-height: 1.2;
 }
 
 .sidebar__nav {
@@ -107,10 +139,27 @@ function handleLogout() {
   padding: 14px 20px;
   color: #fff;
   text-decoration: none;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
   border-left: 3px solid transparent;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.sidebar__item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 0;
+  background: rgba(255, 255, 255, 0.1);
+  transition: width 0.3s ease;
+}
+
+.sidebar__item:hover::before {
+  width: 100%;
 }
 
 .sidebar__item:hover {

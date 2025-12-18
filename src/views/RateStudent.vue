@@ -111,7 +111,6 @@ async function handleSubmit() {
 
   try {
     await dataStore.submitRating({
-      rater_id: authStore.currentUser.id,
       target_id: student.value.id,
       score: form.value.score,
       comment: form.value.comment
@@ -153,19 +152,45 @@ async function handleSubmit() {
   border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   color: #fff;
   position: relative;
+  animation: fadeInScale 0.4s ease-out backwards;
+}
+
+.rating-option:nth-child(1) { animation-delay: 0.05s; }
+.rating-option:nth-child(2) { animation-delay: 0.1s; }
+.rating-option:nth-child(3) { animation-delay: 0.15s; }
+.rating-option:nth-child(4) { animation-delay: 0.2s; }
+.rating-option:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .rating-option:hover {
   border-color: rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .rating-option.active {
   border-color: rgba(255, 255, 255, 0.9);
   background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(255, 255, 255, 0.3);
+}
+
+.rating-option:active {
+  transform: scale(0.98);
 }
 
 .rating-option input[type="radio"] {

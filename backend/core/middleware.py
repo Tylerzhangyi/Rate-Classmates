@@ -16,6 +16,14 @@ class SimpleCorsMiddleware:
         # 预检请求直接返回
         if request.method == "OPTIONS":
             response = HttpResponse()
+            allowed_origins: Iterable[str] = ("http://localhost:5173", "http://127.0.0.1:5173")
+            origin = request.headers.get("Origin")
+            if origin in allowed_origins:
+                response["Access-Control-Allow-Origin"] = origin
+                response["Access-Control-Allow-Credentials"] = "true"
+            response["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+            response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+            return response
         else:
             response = self.get_response(request)
 

@@ -2,7 +2,12 @@
   <div class="container">
     <div :class="['card', { 'card--compact': !filtersExpanded }]">
       <div class="card-header">
-        <h1>学生列表</h1>
+        <div>
+          <h1>{{ schoolName || '学生列表' }}</h1>
+          <router-link to="/schools" class="back-link" v-if="schoolId">
+            <i class="fas fa-arrow-left"></i> 返回评分大厅
+          </router-link>
+        </div>
         <button @click="toggleFilters" class="filter-toggle-btn">
           <i :class="['fas', filtersExpanded ? 'fa-chevron-up' : 'fa-chevron-down']"></i>
           <span>{{ filtersExpanded ? '收起筛选' : '展开筛选' }}</span>
@@ -13,20 +18,9 @@
       <div v-show="filtersExpanded" class="filters">
         <div class="filter-row">
           <div class="input-group" style="flex: 1;">
-            <label>学校</label>
-            <select v-model="filters.school_id">
-              <option value="">全部学校</option>
-              <option v-for="school in schools" :key="school.id" :value="school.id">
-                {{ school.school_name }}
-              </option>
-            </select>
-          </div>
-          <div class="input-group" style="flex: 1;">
             <label>年级</label>
             <input v-model.number="filters.grade" type="number" placeholder="如：2021" />
           </div>
-        </div>
-        <div class="filter-row">
           <div class="input-group" style="flex: 1;">
             <label>姓名搜索</label>
             <input v-model="filters.name" type="text" placeholder="输入姓名搜索" />
@@ -47,6 +41,7 @@
               <option value="avg_score">按平均分</option>
               <option value="rating_count">按评分数量</option>
               <option value="name">按姓名</option>
+              <option value="score">按评分</option>
             </select>
           </div>
           <div class="input-group">
@@ -65,32 +60,44 @@
     </div>
 
     <!-- 学生列表 -->
-    <div class="students-grid">
-      <div v-for="student in filteredStudents" :key="student.id" class="student-card">
-        <div class="student-header">
-          <h3>{{ student.name }}</h3>
-          <span :class="['rating-badge', `rating-${student.dominant_rating}`]">
-            {{ getRatingLabel(student.dominant_rating) }}
-          </span>
+    <div class="students-list">
+      <div 
+        v-for="(student, index) in filteredStudents" 
+        :key="student.id" 
+        :class="['student-item', 'fade-in-item', { top3: index < 3 }]"
+        :style="{ animationDelay: `${index * 0.05}s` }"
+      >
+        <div class="rank">
+          <i v-if="index === 0" class="fas fa-medal rank-icon rank-gold"></i>
+          <i v-else-if="index === 1" class="fas fa-medal rank-icon rank-silver"></i>
+          <i v-else-if="index === 2" class="fas fa-medal rank-icon rank-bronze"></i>
+          <span v-else class="rank-number">{{ index + 1 }}</span>
         </div>
-        <div class="student-info">
-          <p><strong>学校：</strong>{{ student.school_name }}</p>
-          <p><strong>年级：</strong>{{ student.grade }}</p>
-          <p><strong>平均分：</strong>{{ student.avg_score || '暂无' }}</p>
-          <p><strong>评分数量：</strong>{{ student.rating_count }}</p>
-          <p>
-            <strong>徽章：</strong>
-            <template v-if="getStudentBadges(student.id).length">
-              <span class="badge-chip" v-for="badge in getStudentBadges(student.id)" :key="badge.id">
-                {{ badge.badge_name || badge.name }}
-              </span>
-            </template>
-            <span v-else class="badge-chip badge-chip--empty">暂无徽章</span>
-          </p>
+        <div class="entry-info">
+          <div class="entry-name">{{ student.name }}</div>
+          <div class="entry-details">
+            <span>{{ student.school_name }}</span>
+            <span>{{ student.grade }}级</span>
+          </div>
         </div>
-        <div class="student-actions">
-          <router-link :to="`/student/${student.id}`" class="btn btn-secondary">查看详情</router-link>
-          <router-link :to="`/rate/${student.id}`" class="btn btn-primary">评分</router-link>
+        <div class="entry-stats">
+          <div class="stat-item">
+            <span class="stat-label">平均分</span>
+            <span class="stat-value">{{ student.avg_score || '0' }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">评分数</span>
+            <span class="stat-value">{{ student.rating_count }}</span>
+          </div>
+          <div class="rating-badge-container">
+            <span :class="['rating-badge', `rating-${student.dominant_rating}`]">
+              {{ getRatingLabel(student.dominant_rating) }}
+            </span>
+          </div>
+        </div>
+        <div class="entry-actions">
+          <button class="btn btn-secondary btn-sm" @click="goStudent(student.id)">查看</button>
+          <button class="btn btn-primary btn-sm" @click="goRate(student.id)">评分</button>
         </div>
       </div>
     </div>
@@ -103,15 +110,18 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useDataStore } from '../stores/data'
 
+const route = useRoute()
+const router = useRouter()
 const dataStore = useDataStore()
 
+const schoolId = computed(() => route.params.schoolId || null)
 const schools = ref([])
 const filtersExpanded = ref(false)
 const filters = ref({
-  school_id: '',
   grade: null,
   name: '',
   min_score: null,
@@ -120,6 +130,12 @@ const filters = ref({
 
 const sortBy = ref('avg_score')
 const sortOrder = ref('desc')
+
+const schoolName = computed(() => {
+  if (!schoolId.value) return null
+  const school = dataStore.schools.find(s => s.id === schoolId.value)
+  return school ? school.school_name : null
+})
 
 onMounted(async () => {
   await dataStore.loadInitial()
@@ -133,10 +149,12 @@ function toggleFilters() {
 const filteredStudents = computed(() => {
   let result = [...dataStore.students]
   
-  // 应用筛选
-  if (filters.value.school_id) {
-    result = result.filter(s => s.school_id === filters.value.school_id)
+  // 如果指定了学校ID，只显示该学校的学生
+  if (schoolId.value) {
+    result = result.filter(s => s.school_id === schoolId.value)
   }
+  
+  // 应用筛选
   if (filters.value.grade) {
     result = result.filter(s => s.grade === filters.value.grade)
   }
@@ -161,6 +179,9 @@ const filteredStudents = computed(() => {
     } else if (sortBy.value === 'rating_count') {
       aVal = a.rating_count || 0
       bVal = b.rating_count || 0
+    } else if (sortBy.value === 'score') {
+      aVal = a.dominant_rating || 0
+      bVal = b.dominant_rating || 0
     } else {
       aVal = a.name
       bVal = b.name
@@ -191,9 +212,16 @@ function getStudentBadges(studentId) {
   return dataStore.studentBadges.filter(b => b.student_id === studentId)
 }
 
+function goStudent(studentId) {
+  router.push(`/student/${studentId}`)
+}
+
+function goRate(studentId) {
+  router.push(`/rate/${studentId}`)
+}
+
 function resetFilters() {
   filters.value = {
-    school_id: '',
     grade: null,
     name: '',
     min_score: null,
@@ -214,6 +242,22 @@ function resetFilters() {
 
 .card-header h1 {
   margin: 0;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.back-link:hover {
+  color: #fff;
+  transform: translateX(-4px);
 }
 
 .filter-toggle-btn {
@@ -289,80 +333,161 @@ function resetFilters() {
   color: #fff;
 }
 
-.students-grid {
+.students-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.student-item {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: 60px 1fr auto auto;
   gap: 20px;
-}
-
-.student-card {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.student-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-}
-
-.student-header {
-  display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #eee;
-}
-
-.student-header h3 {
-  margin: 0;
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.student-info {
-  margin-bottom: 16px;
-}
-
-.student-info p {
-  margin: 8px 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.badge-chip {
-  display: inline-block;
-  padding: 4px 8px;
-  margin-right: 6px;
-  margin-bottom: 4px;
+  padding: 20px;
+  background: transparent;
+  border: 2px solid rgba(255, 255, 255, 0.3);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.15);
-  color: #fff;
-  font-size: 12px;
+  transition: all 0.3s;
 }
 
-.badge-chip--empty {
-  opacity: 0.7;
+.student-item:hover {
+  border-color: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25);
 }
 
-.student-actions {
-  display: flex;
-  gap: 10px;
+.student-item.top3 {
+  background: transparent;
 }
 
-.student-actions .btn {
-  flex: 1;
+.students-list .student-item:first-child {
+  border-color: #FFD700;
+  border-width: 3px;
+  box-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+}
+
+.students-list .student-item:nth-child(2) {
+  border-color: #C0C0C0;
+  border-width: 3px;
+  box-shadow: 0 0 15px rgba(192, 192, 192, 0.4);
+}
+
+.students-list .student-item:nth-child(3) {
+  border-color: #CD7F32;
+  border-width: 3px;
+  box-shadow: 0 0 15px rgba(205, 127, 50, 0.4);
+}
+
+.rank {
   text-align: center;
-  text-decoration: none;
+  font-size: 24px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.rank-icon {
+  font-size: 32px;
   display: inline-block;
+}
+
+.rank-gold {
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+.rank-silver {
+  color: #C0C0C0;
+  text-shadow: 0 0 10px rgba(192, 192, 192, 0.6);
+}
+
+.rank-bronze {
+  color: #CD7F32;
+  text-shadow: 0 0 10px rgba(205, 127, 50, 0.6);
+}
+
+.rank-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  color: #fff;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  margin: 0 auto;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.entry-info {
+  flex: 1;
+}
+
+.entry-name {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 8px;
+}
+
+.entry-details {
+  display: flex;
+  gap: 16px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.entry-stats {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+}
+
+.rating-badge-container {
+  margin-left: 16px;
+}
+
+.entry-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.entry-actions .btn {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.8);
   color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 18px;
+  cursor: pointer;
+}
+
+.btn-sm {
+  padding: 0 18px;
+  font-size: 12px;
 }
 </style>
 

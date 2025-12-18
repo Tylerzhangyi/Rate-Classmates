@@ -2,10 +2,13 @@
   <nav class="navbar">
     <div class="nav-container">
       <div class="nav-brand">
-        <router-link to="/students">Rate My Classmate</router-link>
+        <router-link to="/schools" class="brand-link">
+          <img src="/images/favicon.png" alt="Logo" class="brand-icon" />
+          <span>Rate My Classmate</span>
+        </router-link>
       </div>
       <div class="nav-links">
-        <router-link to="/students">学生列表</router-link>
+        <router-link to="/schools">评分大厅</router-link>
         <router-link to="/leaderboard">排行榜</router-link>
         <router-link to="/apply-student">申请学生</router-link>
         <router-link to="/apply-school">申请学校</router-link>
@@ -19,13 +22,28 @@
 <script setup>
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import client from '../api/client'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
-function handleLogout() {
-  authStore.logout()
-  router.push('/login')
+async function handleLogout() {
+  // 先清除状态，确保路由守卫检测到未登录
+  authStore.currentUser = null
+  localStorage.removeItem('currentUser')
+  
+  try {
+    await client.post('auth/logout')
+  } catch (e) {
+    // 即使后端登出失败，前端状态已清除
+    console.error('登出失败:', e)
+  }
+  
+  // 使用 replace 替换当前历史记录，确保跳转到登录页
+  router.replace('/login').catch(() => {
+    // 如果路由跳转失败，使用 window.location 强制跳转
+    window.location.href = '/login'
+  })
 }
 </script>
 
@@ -53,6 +71,26 @@ function handleLogout() {
   text-decoration: none;
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
   transition: color 0.3s;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.5));
+  transition: transform 0.3s;
+  display: block;
+  flex-shrink: 0;
+}
+
+.brand-link:hover .brand-icon {
+  transform: scale(1.1);
 }
 
 .nav-brand a:hover {

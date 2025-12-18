@@ -106,6 +106,25 @@ p, span, div {
   border: 1px solid rgba(255, 255, 255, 0.2);
   margin-bottom: 20px;
   color: #fff;
+  animation: cardFadeIn 0.5s ease-out;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes cardFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .btn {
@@ -114,8 +133,28 @@ p, span, div {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn-primary {
@@ -236,6 +275,26 @@ p, span, div {
   padding: 40px;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.loading::after {
+  content: '';
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .empty-state {
@@ -249,5 +308,170 @@ p, span, div {
   margin-bottom: 10px;
   color: #fff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 列表项动画 */
+.fade-in-item {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 为列表项添加延迟动画 */
+.fade-in-item:nth-child(1) { animation-delay: 0.05s; }
+.fade-in-item:nth-child(2) { animation-delay: 0.1s; }
+.fade-in-item:nth-child(3) { animation-delay: 0.15s; }
+.fade-in-item:nth-child(4) { animation-delay: 0.2s; }
+.fade-in-item:nth-child(5) { animation-delay: 0.25s; }
+.fade-in-item:nth-child(6) { animation-delay: 0.3s; }
+.fade-in-item:nth-child(7) { animation-delay: 0.35s; }
+.fade-in-item:nth-child(8) { animation-delay: 0.4s; }
+.fade-in-item:nth-child(9) { animation-delay: 0.45s; }
+.fade-in-item:nth-child(10) { animation-delay: 0.5s; }
+
+/* 输入框聚焦动画增强 */
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+  transform: scale(1.02);
+}
+
+/* 评分徽章动画 */
+.rating-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-right: 8px;
+  transition: all 0.3s ease;
+  animation: badgePulse 0.5s ease-out;
+}
+
+.rating-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* 成功/错误消息动画 */
+.success-message,
+.error-message {
+  animation: slideInDown 0.4s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 徽章芯片动画 */
+.badge-chip {
+  transition: all 0.3s ease;
+  display: inline-block;
+}
+
+.badge-chip:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* 学生卡片增强动画 */
+.student-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.student-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* 排行榜项增强动画 */
+.leaderboard-item {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.leaderboard-item:hover {
+  transform: translateX(4px);
+}
+
+/* 输入框组动画 */
+.input-group {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 标签页切换动画 */
+.tab-btn {
+  position: relative;
+}
+
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.8);
+  transition: width 0.3s ease;
+}
+
+.tab-btn.active::after {
+  width: 100%;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 选择文本动画 */
+::selection {
+  background: rgba(102, 126, 234, 0.3);
+  color: #fff;
+}
+
+/* 焦点可见性增强 */
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 

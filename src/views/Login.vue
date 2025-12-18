@@ -3,7 +3,10 @@
     <div class="login__container container grid">
       <div class="login__content grid">
         <div class="login__data">
-          <h1 class="login__title">Rate My Classmates</h1>
+          <div class="login__brand">
+            <img src="/images/favicon.png" alt="Logo" class="login__logo-icon" />
+            <h1 class="login__title">Rate My Classmates</h1>
+          </div>
           <p class="login__description">欢迎回来，请登录您的账号</p>
         </div>
 
@@ -95,7 +98,7 @@ async function handleLogin() {
     } else {
       localStorage.removeItem('rememberedAccount')
     }
-    router.push('/students')
+    router.push('/schools')
   } else {
     error.value = result.message
   }
@@ -126,10 +129,25 @@ async function handleLogin() {
   text-align: center;
 }
 
+.login__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+.login__logo-icon {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(255, 255, 255, 0.3));
+}
+
 .login__title {
   font-size: 2rem;
   color: #fff;
-  margin-bottom: 0.75rem;
+  margin: 0;
   font-weight: 700;
   text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }

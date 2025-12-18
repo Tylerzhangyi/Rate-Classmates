@@ -147,7 +147,7 @@
             <button type="submit" class="btn btn-primary" :disabled="submitting">
               {{ submitting ? '提交中...' : '提交申请' }}
             </button>
-            <router-link to="/students" class="btn btn-secondary">取消</router-link>
+            <router-link to="/schools" class="btn btn-secondary">取消</router-link>
           </div>
         </form>
       </template>
@@ -229,7 +229,6 @@ function handleSubmit() {
   }
 
   const application = {
-    applicant_id: authStore.currentUser.id,
     student_name: form.value.student_name,
     school_id: form.value.school_id,
     school_name: selectedSchool.school_name,
@@ -247,6 +246,10 @@ function handleSubmit() {
     reason: ''
   }
   submitting.value = false
+
+  setTimeout(() => {
+    router.push('/schools')
+  }, 2000)
 }
 
 function handleApprove(id) {

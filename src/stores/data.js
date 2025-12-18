@@ -110,8 +110,8 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function submitRating(rating) {
+    // rater_id 从 session 获取，不需要传递
     const res = await client.post('ratings', {
-      rater_id: rating.rater_id,
       target_id: rating.target_id,
       score: rating.score,
       comment: rating.comment || ''
