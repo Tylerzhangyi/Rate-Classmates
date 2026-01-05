@@ -95,16 +95,47 @@ trap cleanup SIGINT SIGTERM
 echo "🔧 启动后端服务 (Django)..."
 cd backend
 
+# 检测可用的 Python 版本（优先使用 python3.9）
+detect_python() {
+    for cmd in python3.9 python3.11 python3.10 python3.8 python3 python; do
+        if command -v $cmd &> /dev/null; then
+            # 检查这个 Python 是否有 Django
+            if $cmd -c "import django" 2>/dev/null; then
+                echo "$cmd"
+                return 0
+            fi
+        fi
+    done
+    # 如果都没 Django，返回第一个可用的
+    for cmd in python3.9 python3.11 python3.10 python3.8 python3 python; do
+        if command -v $cmd &> /dev/null; then
+            echo "$cmd"
+            return 0
+        fi
+    done
+    echo "python3"
+}
+
 # 检查虚拟环境是否存在
 if [ -d ".venv" ]; then
     echo "📦 检测到虚拟环境，激活中..."
     source .venv/bin/activate 2>/dev/null || true
-    PYTHON_CMD="python3"
-    PIP_CMD="pip3"
+    PYTHON_CMD=$(detect_python)
+    PIP_CMD="${PYTHON_CMD} -m pip"
 else
-    PYTHON_CMD="python3"
-    PIP_CMD="pip3"
+    PYTHON_CMD=$(detect_python)
+    # 尝试找到对应的 pip
+    if command -v "${PYTHON_CMD%3.9}pip3.9" &> /dev/null; then
+        PIP_CMD="${PYTHON_CMD%3.9}pip3.9"
+    elif command -v "${PYTHON_CMD%3}pip3" &> /dev/null; then
+        PIP_CMD="${PYTHON_CMD%3}pip3"
+    else
+        PIP_CMD="${PYTHON_CMD} -m pip"
+    fi
 fi
+
+echo "🐍 使用 Python: $PYTHON_CMD"
+echo "📦 使用 pip: $PIP_CMD"
 
 # 检查并安装 Python 依赖
 echo "📦 检查 Python 依赖..."
@@ -112,21 +143,22 @@ if [ -f "requirements.txt" ]; then
     # 检查 Django 是否已安装
     if ! $PYTHON_CMD -c "import django" 2>/dev/null; then
         echo "⚠️  Django 未安装，正在安装依赖..."
-        $PIP_CMD install -r requirements.txt --quiet || {
-            echo "❌ 依赖安装失败，请手动执行: pip3 install -r backend/requirements.txt"
+        $PIP_CMD install -r requirements.txt || {
+            echo "❌ 依赖安装失败，请手动执行: $PIP_CMD install -r backend/requirements.txt"
             cd ..
             exit 1
         }
         echo "✅ 依赖安装完成"
     else
-        echo "✅ Python 依赖已就绪"
+        DJANGO_VERSION=$($PYTHON_CMD -c "import django; print(django.get_version())" 2>/dev/null)
+        echo "✅ Python 依赖已就绪 (Django $DJANGO_VERSION)"
     fi
 else
     echo "⚠️  未找到 requirements.txt，跳过依赖检查"
 fi
 
 # 启动后端并保存日志
-echo "🚀 启动 Django 服务器..."
+echo "🚀 启动 Django 服务器 (使用 $PYTHON_CMD)..."
 $PYTHON_CMD manage.py runserver 0.0.0.0:5001 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
