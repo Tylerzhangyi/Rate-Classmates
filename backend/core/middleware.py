@@ -16,15 +16,19 @@ class SimpleCorsMiddleware:
     def __call__(self, request):
         # 允许的来源列表
         allowed_origins: Iterable[str] = (
+            "http://localhost:8805",
             "http://localhost:5002",
             "http://localhost:5000",
             "http://localhost:5173",
+            "http://127.0.0.1:8805",
             "http://127.0.0.1:5002",
             "http://127.0.0.1:5000",
             "http://127.0.0.1:5173",
+            "http://110.40.153.38:8805",
             "http://110.40.153.38:5002",
             "http://110.40.153.38:5000",
             "http://110.40.153.38:5173",
+            "http://tyler.yunguhs.com:8805",
         )
         
         # 预检请求直接返回

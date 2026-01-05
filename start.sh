@@ -75,7 +75,7 @@ clean_port() {
     fi
 }
 
-clean_port 5002
+clean_port 8805
 clean_port 5001
 
 # 启动函数
@@ -195,7 +195,7 @@ FRONTEND_PID=$!
 
 echo ""
 echo "✅ 服务已启动！"
-echo "📱 前端地址: http://0.0.0.0:5002"
+echo "📱 前端地址: http://0.0.0.0:8805"
 echo "🔧 后端地址: http://0.0.0.0:5001"
 echo ""
 echo "按 Ctrl+C 停止所有服务"
