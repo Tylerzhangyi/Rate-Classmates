@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "dev:backend": "cd backend && python3 manage.py runserver 5001",
+    "dev:backend": "cd backend && python3 manage.py runserver 0.0.0.0:5001",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:backend\"",
     "build": "vite build",
     "preview": "vite preview"

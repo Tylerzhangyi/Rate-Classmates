@@ -44,7 +44,7 @@ trap cleanup SIGINT SIGTERM
 # 启动后端
 echo "🔧 启动后端服务 (Django)..."
 cd backend
-python3 manage.py runserver 5001 > /dev/null 2>&1 &
+python3 manage.py runserver 0.0.0.0:5001 > /dev/null 2>&1 &
 BACKEND_PID=$!
 cd ..
 
@@ -58,8 +58,8 @@ FRONTEND_PID=$!
 
 echo ""
 echo "✅ 服务已启动！"
-echo "📱 前端地址: http://localhost:5000"
-echo "🔧 后端地址: http://localhost:5001"
+echo "📱 前端地址: http://0.0.0.0:5000"
+echo "🔧 后端地址: http://0.0.0.0:5001"
 echo ""
 echo "按 Ctrl+C 停止所有服务"
 echo ""

@@ -14,7 +14,9 @@ SECRET_KEY = "dev-secret-key-change-me"
 
 DEBUG = True
 
-ALLOWED_HOSTS: list[str] = []
+# 允许所有主机访问（开发/测试环境）
+# 生产环境应限制为具体的域名或 IP
+ALLOWED_HOSTS: list[str] = ['*']
 
 INSTALLED_APPS = [
     "django.contrib.admin",

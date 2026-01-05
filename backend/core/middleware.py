@@ -5,7 +5,8 @@ from django.http import HttpResponse
 
 class SimpleCorsMiddleware:
     """
-    轻量 CORS 支持，允许前端 http://localhost:5173 访问。
+    轻量 CORS 支持，允许前端访问。
+    支持开发环境（localhost）和服务器部署（110.40.153.38）。
     如需更严谨控制可替换为 django-cors-headers。
     """
 
@@ -13,10 +14,19 @@ class SimpleCorsMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
+        # 允许的来源列表
+        allowed_origins: Iterable[str] = (
+            "http://localhost:5000",
+            "http://localhost:5173",
+            "http://127.0.0.1:5000",
+            "http://127.0.0.1:5173",
+            "http://110.40.153.38:5000",
+            "http://110.40.153.38:5173",
+        )
+        
         # 预检请求直接返回
         if request.method == "OPTIONS":
             response = HttpResponse()
-            allowed_origins: Iterable[str] = ("http://localhost:5173", "http://127.0.0.1:5173")
             origin = request.headers.get("Origin")
             if origin in allowed_origins:
                 response["Access-Control-Allow-Origin"] = origin
@@ -27,7 +37,6 @@ class SimpleCorsMiddleware:
         else:
             response = self.get_response(request)
 
-        allowed_origins: Iterable[str] = ("http://localhost:5173", "http://127.0.0.1:5173")
         origin = request.headers.get("Origin")
         if origin in allowed_origins:
             response["Access-Control-Allow-Origin"] = origin

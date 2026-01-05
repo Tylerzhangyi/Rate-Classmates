@@ -37,7 +37,7 @@ if not exist "node_modules" (
 )
 
 echo 🔧 启动后端服务 (Django)...
-start "Django Backend" cmd /k "cd backend && python manage.py runserver 5001"
+start "Django Backend" cmd /k "cd backend && python manage.py runserver 0.0.0.0:5001"
 
 timeout /t 2 /nobreak >nul
 

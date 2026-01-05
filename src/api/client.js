@@ -1,10 +1,10 @@
 import axios from 'axios'
 
 const client = axios.create({
-  // 注意：localhost 与 127.0.0.1 在浏览器 SameSite 规则下被视为不同站点，
-  // 会导致 Django session cookie 不随请求发送，从而出现“已登录但接口 401 未登录”。
-  // 因此前后端都统一用 localhost。
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api/',
+  // 服务器部署时，使用环境变量 VITE_API_BASE_URL 设置后端地址
+  // 开发环境默认使用 localhost，生产环境应设置为服务器 IP 地址
+  // 例如：VITE_API_BASE_URL=http://110.40.153.38:5001/api/
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://110.40.153.38:5001/api/',
   withCredentials: true  // 启用 cookie，用于 session 认证
 })
 
