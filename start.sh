@@ -83,6 +83,8 @@ cleanup() {
     echo ""
     echo "🛑 正在停止服务..."
     kill $FRONTEND_PID $BACKEND_PID 2>/dev/null
+    # 清理日志文件
+    rm -f backend.log 2>/dev/null
     exit 0
 }
 
@@ -92,12 +94,42 @@ trap cleanup SIGINT SIGTERM
 # 启动后端
 echo "🔧 启动后端服务 (Django)..."
 cd backend
-python3 manage.py runserver 0.0.0.0:5001 > /dev/null 2>&1 &
+
+# 检查虚拟环境是否存在
+if [ -d ".venv" ]; then
+    echo "📦 检测到虚拟环境，激活中..."
+    source .venv/bin/activate 2>/dev/null || true
+fi
+
+# 启动后端并保存日志
+python3 manage.py runserver 0.0.0.0:5001 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
-# 等待后端启动
-sleep 2
+# 等待后端启动并验证
+echo "⏳ 等待后端启动..."
+sleep 3
+
+# 检查后端是否成功启动
+if ! kill -0 $BACKEND_PID 2>/dev/null; then
+    echo "❌ 后端启动失败！"
+    echo "📋 后端日志："
+    tail -20 backend.log 2>/dev/null || echo "无法读取日志文件"
+    exit 1
+fi
+
+# 检查端口是否在监听
+if command -v lsof &> /dev/null; then
+    if lsof -ti:5001 > /dev/null 2>&1; then
+        echo "✅ 后端服务已启动 (PID: $BACKEND_PID)"
+    else
+        echo "⚠️  警告: 后端进程存在但端口 5001 未监听"
+        echo "📋 后端日志："
+        tail -20 backend.log 2>/dev/null || echo "无法读取日志文件"
+    fi
+else
+    echo "✅ 后端进程已启动 (PID: $BACKEND_PID)"
+fi
 
 # 启动前端
 echo "🎨 启动前端服务 (Vite)..."
