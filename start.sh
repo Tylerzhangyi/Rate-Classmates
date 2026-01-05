@@ -30,6 +30,20 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
+# 检查并清理端口占用
+echo "🔍 检查端口占用情况..."
+if lsof -ti:5000 > /dev/null 2>&1; then
+    echo "⚠️  端口 5000 被占用，正在清理..."
+    lsof -ti:5000 | xargs kill -9 2>/dev/null
+    sleep 1
+fi
+
+if lsof -ti:5001 > /dev/null 2>&1; then
+    echo "⚠️  端口 5001 被占用，正在清理..."
+    lsof -ti:5001 | xargs kill -9 2>/dev/null
+    sleep 1
+fi
+
 # 启动函数
 cleanup() {
     echo ""
