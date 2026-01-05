@@ -1,0 +1,382 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\onecolumn
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
+\usepackage{fontspec}
+\usepackage{xeCJK}
+% 设置中文字体 - 优先使用PingFang SC，否则使用Songti SC
+\IfFontExistsTF{PingFang SC}{
+    \setCJKmainfont{PingFang SC}
+}{
+    \setCJKmainfont{Songti SC}
+}
+% 设置英文正文字体
+\setmainfont{Times New Roman}
+% 设置代码字体
+\setmonofont{Monaco}
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+% 代码高亮配置 - 专业蓝色主题
+\definecolor{codegreen}{rgb}{0.13,0.55,0.13}      % 深绿色注释
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}          % 灰色行号
+\definecolor{codepurple}{rgb}{0.58,0,0.82}        % 紫色字符串
+\definecolor{codeblue}{rgb}{0.0,0.0,0.8}          % 蓝色关键字
+\definecolor{backcolour}{rgb}{0.98,0.98,1.0}      % 浅蓝灰色背景
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2,
+    frame=single,
+    frameround=tttt,
+    rulecolor=\color{blue!30}
+}
+
+\lstset{style=mystyle}
+
+% 调整间距
+\setlength{\parskip}{0.4em}
+\lstset{aboveskip=12pt, belowskip=12pt}
+\setlength{\floatsep}{15pt plus 2pt minus 2pt}
+\setlength{\textfloatsep}{25pt plus 2pt minus 4pt}
+\setlength{\intextsep}{15pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{10pt}
+\setlength{\belowcaptionskip}{10pt}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{基于Django Session机制的用户登录与授权系统实现}
+
+\author{\IEEEauthorblockN{1\textsuperscript{st} 张翼}
+\IEEEauthorblockA{\textit{计算机科学与技术系} \\
+\textit{杭州云谷学校}\\
+杭州, 中国 \\
+tyler.zhangyi@yungu.org}
+}
+
+\maketitle
+
+\begin{abstract}
+本文阐述基于Django Session机制的用户登录与授权系统实现，回答四个核心问题：Cookie在浏览器中的工作原理及自动认证机制、服务器如何识别用户并发放Cookie、Session存储与用户关联方式、密码验证流程。
+\end{abstract}
+
+\begin{IEEEkeywords}
+用户认证, Session管理, Cookie机制, Django框架, Web安全
+\end{IEEEkeywords}
+
+\section{引言}
+
+本文基于Vue.js前端和Django后端的Web应用系统，阐述Django Session认证机制的实现，回答以下四个问题：(1) Cookie在浏览器中的工作原理及多请求自动认证；(2) 服务器如何识别用户并发放Cookie；(3) Session存储与用户关联机制；(4) 密码验证流程。
+
+\section{Cookie机制与自动认证}
+
+\subsection{Cookie在浏览器中的工作原理}
+
+HTTP Cookie存储在浏览器中，服务器通过Set-Cookie响应头设置Cookie后，浏览器会在后续请求中自动在请求头中包含该Cookie。前端使用Axios库，关键配置如下：
+
+\vspace{0.2cm}
+\begin{lstlisting}[caption=前端API客户端配置]
+import axios from 'axios'
+
+const client = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL || 
+           'http://localhost:8000/api/',
+  withCredentials: true  // 启用 cookie，用于 session 认证
+})
+
+export default client
+\end{lstlisting}
+
+\texttt{withCredentials: true} 使浏览器在跨域请求中自动包含Cookie。
+
+\subsection{多请求场景下的自动认证}
+
+登录成功后，服务器通过Set-Cookie设置\texttt{sessionid} Cookie。此后，浏览器在每次AJAX请求中自动在请求头包含该Cookie，无需前端代码处理。前端登录实现：
+
+\vspace{0.2cm}
+\begin{lstlisting}[caption=前端登录逻辑]
+async function login(account, password) {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await client.post('auth/login', { 
+      account, password 
+    })
+    const user = res.data.data
+    currentUser.value = { ...user, name: user.account, 
+                         id: user.user_id }
+    localStorage.setItem('currentUser', 
+                        JSON.stringify(currentUser.value))
+    return { success: true, message: res.data.message }
+  } catch (e) {
+    error.value = e.message
+    return { success: false, message: e.message }
+  } finally {
+    loading.value = false
+  }
+}
+\end{lstlisting}
+
+\texttt{localStorage}仅用于前端状态管理，认证依赖浏览器自动发送的Cookie。
+
+服务器端Cookie配置：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=Session Cookie配置]
+SESSION_COOKIE_NAME = "sessionid"
+SESSION_COOKIE_AGE = 86400 * 7  # 7天过期
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False  # 开发环境
+\end{lstlisting}
+
+\texttt{HttpOnly=True}防止JavaScript访问，\texttt{SameSite=Lax}限制跨站发送，\texttt{Secure}在生产环境应设为True。
+
+\section{服务器端用户识别与会话创建}
+
+\subsection{登录流程概述}
+
+登录流程如图\ref{fig:login_flow}所示。用户提交登录表单后，前端通过POST请求将账号和密码发送到\texttt{/api/auth/login}端点。
+
+\vspace{0.2cm}
+\begin{figure}[H]
+\centering
+\resizebox{0.4\textwidth}{!}{
+\begin{tikzpicture}[node distance=0.5cm, auto, >=stealth, every node/.style={align=center, font=\scriptsize}]
+    \node [draw, rectangle, minimum width=1.5cm, minimum height=0.4cm] (user) {用户输入\\账号密码};
+    \node [draw, rectangle, below=of user, minimum width=1.5cm, minimum height=0.4cm] (frontend) {前端Vue\\组件};
+    \node [draw, rectangle, below=of frontend, minimum width=1.5cm, minimum height=0.4cm] (api) {Django API\\客户端};
+    \node [draw, rectangle, below=of api, minimum width=1.5cm, minimum height=0.4cm] (backend) {后端登录\\视图};
+    \node [draw, rectangle, below=of backend, minimum width=1.5cm, minimum height=0.4cm] (db) {数据库\\验证};
+    \node [draw, rectangle, below=of db, minimum width=1.5cm, minimum height=0.4cm] (session) {创建\\Session};
+    \node [draw, rectangle, below=of session, minimum width=1.5cm, minimum height=0.4cm] (cookie) {返回\\Set-Cookie};
+    
+    \draw [->, thick] (user) -- (frontend);
+    \draw [->, thick] (frontend) -- node[right, font=\tiny] {POST /auth/login} (api);
+    \draw [->, thick] (api) -- node[right, font=\tiny] {HTTP请求} (backend);
+    \draw [->, thick] (backend) -- node[right, font=\tiny] {查询用户} (db);
+    \draw [->, thick] (db) -- node[right, font=\tiny] {验证成功} (session);
+    \draw [->, thick] (session) -- node[right, font=\tiny] {sessionid} (cookie);
+\end{tikzpicture}
+}
+\caption{用户登录流程图}
+\label{fig:login_flow}
+\end{figure}
+
+\subsection{服务器端登录实现}
+
+服务器端登录视图实现：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=服务器端登录视图]
+@csrf_exempt
+@allow_methods(["POST"])
+def login_view(request: HttpRequest):
+    payload = parse_json(request)
+    account = payload.get("account")
+    password = payload.get("password")
+    try:
+        user = User.objects.get(account=account, 
+                                password=password)
+    except User.DoesNotExist:
+        return api_response(401, "账号或密码错误", 
+                           status=401)
+    # 将用户信息存入 session
+    request.session['user_id'] = str(user.user_id)
+    request.session['account'] = user.account
+    request.session['role'] = user.role
+    request.session.set_expiry(86400 * 7)  # 7天过期
+    # 确保 session 被保存
+    request.session.save()
+    return api_response(200, "登录成功", 
+                       _user_payload(user))
+\end{lstlisting}
+
+\vspace{0.3cm}
+\subsection{Session创建与Cookie发放}
+
+Django Session中间件处理流程：(1) 从请求Cookie读取\texttt{sessionid}；(2) 加载Session数据到\texttt{request.session}；(3) 视图函数读写Session；(4) 响应时，如果Session被修改，中间件生成sessionid、存储到\texttt{django\_session}表、在响应头设置\texttt{Set-Cookie: sessionid=<session\_key>}。\texttt{request.session.save()}确保Session持久化并触发Cookie生成。
+
+\section{Session存储与用户关联}
+
+\subsection{Session数据存储机制}
+
+Django将Session数据存储在\texttt{django\_session}表：\texttt{session\_key}（主键，即sessionid）、\texttt{session\_data}（加密后的Session数据）、\texttt{expire\_date}（过期时间）。Session数据采用base64编码的pickle格式，经HMAC签名确保完整性。
+
+\vspace{0.2cm}
+\subsection{用户身份关联过程}
+
+当用户后续请求到达服务器时，认证流程如下：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=认证装饰器]
+def require_auth(view_func: Callable) -> Callable:
+    """
+    认证装饰器：检查用户是否已登录（通过 session）
+    """
+    @wraps(view_func)
+    def wrapper(request: HttpRequest, *args, **kwargs):
+        if 'user_id' not in request.session:
+            return api_response(401, "未登录，请先登录", 
+                               status=401)
+        return view_func(request, *args, **kwargs)
+    return wrapper
+\end{lstlisting}
+
+认证流程：(1) 浏览器在请求头自动包含Cookie: \texttt{sessionid=<session\_key>}；(2) Session中间件读取sessionid，查询\texttt{django\_session}表；(3) 加载Session数据到\texttt{request.session}；(4) 视图函数通过\texttt{request.session['user\_id']}获取用户ID；(5) 装饰器检查\texttt{user\_id}，不存在则返回401。
+
+\vspace{0.3cm}
+\subsection{Session生命周期管理}
+
+Session有效期通过\texttt{request.session.set\_expiry(86400 * 7)}设置为7天。登出时调用\texttt{request.session.flush()}删除Session记录：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=登出实现]
+def logout_view(request: HttpRequest):
+    """登出：清除 session"""
+    request.session.flush()
+    return api_response(200, "登出成功")
+\end{lstlisting}
+
+\section{密码验证机制}
+
+\subsection{密码存储策略}
+
+系统采用明文密码存储。用户模型定义：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=用户模型]
+class User(models.Model):
+    class Role(models.TextChoices):
+        USER = "user", "user"
+        ADMIN = "admin", "admin"
+    
+    user_id = models.UUIDField(primary_key=True, 
+                               default=uuid.uuid4)
+    account = models.CharField(max_length=255, unique=True)
+    password = models.CharField(max_length=255)  
+    # 按需求存明文
+    role = models.CharField(max_length=10, 
+                           choices=Role.choices, 
+                           default=Role.USER)
+    created_at = models.DateTimeField(auto_now_add=True)
+\end{lstlisting}
+
+\subsection{密码验证过程}
+
+密码验证逻辑：
+
+\vspace{0.2cm}
+\begin{lstlisting}[language=Python, caption=密码验证逻辑]
+try:
+    user = User.objects.get(account=account, 
+                            password=password)
+except User.DoesNotExist:
+    return api_response(401, "账号或密码错误", 
+                       status=401)
+\end{lstlisting}
+
+验证步骤：(1) 接收\texttt{account}和\texttt{password}；(2) 使用\texttt{User.objects.get(account=account, password=password)}查询；(3) 存在匹配记录则验证成功；(4) 抛出\texttt{User.DoesNotExist}异常则返回401。返回统一错误信息"账号或密码错误"可防止账号枚举攻击。
+
+\section{完整认证流程}
+
+图\ref{fig:complete_auth}展示了从登录到后续API请求的完整认证流程。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.9\textwidth}{!}{
+\begin{tikzpicture}[node distance=3cm and 3.2cm, auto, >=stealth, every node/.style={align=center, font=\small}]
+    % 登录流程 - 第一行
+    \node [draw, rectangle, minimum width=2.5cm, minimum height=0.9cm] (login) {用户登录};
+    \node [draw, rectangle, right=of login, minimum width=3cm, minimum height=0.9cm] (req1) {POST\\/auth/login};
+    \node [draw, rectangle, right=of req1, minimum width=2.5cm, minimum height=0.9cm] (verify) {验证密码};
+    
+    % 登录流程 - 第二行
+    \node [draw, rectangle, below=of verify, minimum width=3cm, minimum height=0.9cm] (session) {创建Session};
+    \node [draw, rectangle, left=of session, minimum width=2.5cm, minimum height=0.9cm] (cookie) {Set-Cookie};
+    \node [draw, rectangle, below=of cookie, minimum width=3cm, minimum height=0.9cm] (store) {存储Session\\到DB};
+    
+    % 后续请求流程 - 第一行
+    \node [draw, rectangle, below=of login, yshift=-1.5cm, minimum width=3cm, minimum height=0.9cm] (api) {后续API\\请求};
+    \node [draw, rectangle, right=of api, minimum width=3cm, minimum height=0.9cm] (req2) {GET/POST\\请求};
+    \node [draw, rectangle, right=of req2, minimum width=2.5cm, minimum height=0.9cm] (check) {检查Session};
+    
+    % 后续请求流程 - 第二行
+    \node [draw, rectangle, below=of check, minimum width=2.5cm, minimum height=0.9cm] (auth) {验证\\user\_id};
+    \node [draw, rectangle, left=of auth, minimum width=2.5cm, minimum height=0.9cm] (allow) {允许访问};
+    
+    % 登录流程箭头
+    \draw [->, thick] (login) -- (req1);
+    \draw [->, thick] (req1) -- (verify);
+    \draw [->, thick] (verify) -- (session);
+    \draw [->, thick] (session) -- (cookie);
+    \draw [->, thick] (cookie) -- (store);
+    
+    % 后续请求流程箭头
+    \draw [->, thick] (login) -- node[left, xshift=-0.6cm, font=\tiny] {登录后} (api);
+    \draw [->, thick] (api) -- node[above, font=\tiny] {Cookie\\自动发送} (req2);
+    \draw [->, thick] (req2) -- (check);
+    \draw [->, thick] (check) -- (auth);
+    \draw [->, thick] (auth) -- (allow);
+    
+    % Session到后续请求的连接（使用更平滑的曲线）
+    \draw [->, dashed, thick] (store) to[out=0, in=200] node[right, xshift=0.6cm, yshift=-0.3cm, font=\tiny] {Session\\关联} (req2);
+\end{tikzpicture}
+}
+\caption{完整认证流程示意图}
+\label{fig:complete_auth}
+\end{figure}
+
+\section{结论}
+
+本文阐述了基于Django Session机制的用户认证系统实现，回答了四个核心问题：
+
+\begin{enumerate}
+    \item \textbf{Cookie自动发送}：配置\texttt{withCredentials: true}后，浏览器在所有AJAX请求中自动包含Session Cookie。
+    
+    \item \textbf{Session创建流程}：登录成功后，服务器将用户信息存入Session，Django中间件自动生成sessionid并通过Set-Cookie发送给浏览器。
+    
+    \item \textbf{用户身份关联}：Session数据存储在\texttt{django\_session}表，通过sessionid关联。每次请求时，Session中间件自动加载Session数据到\texttt{request.session}。
+    
+    \item \textbf{密码验证}：使用\texttt{User.objects.get(account=account, password=password)}直接比较验证。
+\end{enumerate}
+
+\begin{thebibliography}{00}
+\bibitem{django_sessions}
+Django Documentation. ``Sessions.'' [Online]. Available: https://docs.djangoproject.com/en/stable/topics/http/sessions/
+
+\bibitem{http_cookies}
+IETF RFC 6265. ``HTTP State Management Mechanism.'' [Online]. Available: https://tools.ietf.org/html/rfc6265
+
+\bibitem{cors_spec}
+Mozilla Developer Network. ``Cross-Origin Resource Sharing (CORS).'' [Online]. Available: https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS
+
+\bibitem{axios_docs}
+Axios Documentation. ``Request Config.'' [Online]. Available: https://axios-http.com/docs/req\_config
+\end{thebibliography}
+
+\end{document}

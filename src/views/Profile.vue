@@ -4,15 +4,9 @@
       <h1>个人中心</h1>
       
       <!-- 个人信息 -->
-      <div class="profile-section">
-        <h2>个人信息</h2>
-        <div class="profile-info">
-          <div class="info-item">
-            <strong>姓名：</strong>{{ currentUser.name }}
-          </div>
-          <div class="info-item">
-            <strong>账号：</strong>{{ currentUser.account }}
-          </div>
+      <div class="profile-info profile-info--compact">
+        <div class="info-item">
+          <strong>账号：</strong>{{ currentUser.account }}
         </div>
       </div>
 
@@ -103,6 +97,12 @@ function formatTime(timeString) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
+}
+
+.profile-info--compact {
+  margin-bottom: 30px;
+  padding-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .info-item {

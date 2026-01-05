@@ -30,16 +30,24 @@
               />
               <i class="fas fa-lock register__input-icon"></i>
             </div>
+          </div>
 
-            <div class="register__box">
+          <!-- 用户协议复选框 -->
+          <div class="register__agreement">
+            <label class="register__checkbox-label">
               <input 
-                v-model="form.name" 
-                type="text" 
-                required 
-                placeholder="姓名（用于展示评分者昵称）"
-                class="register__input"
+                v-model="form.agreedToTerms" 
+                type="checkbox" 
+                class="register__checkbox"
+                required
               />
-            </div>
+              <span class="register__checkbox-text">
+                我已阅读并同意
+                <a href="#" class="register__terms-link" @click.prevent="showTerms">《用户协议》</a>
+                和
+                <a href="#" class="register__terms-link" @click.prevent="showPrivacy">《隐私政策》</a>
+              </span>
+            </label>
           </div>
 
           <div v-if="error" class="register__error">
@@ -50,7 +58,12 @@
             {{ success }}
           </div>
 
-          <button type="submit" class="register__button button">
+          <button 
+            type="submit" 
+            class="register__button button"
+            :disabled="!form.agreedToTerms"
+            :class="{ 'register__button--disabled': !form.agreedToTerms }"
+          >
             注册
           </button>
 
@@ -74,7 +87,7 @@ const authStore = useAuthStore()
 const form = ref({
   account: '',
   password: '',
-  name: ''
+  agreedToTerms: false
 })
 
 const error = ref('')
@@ -83,6 +96,12 @@ const success = ref('')
 async function handleRegister() {
   error.value = ''
   success.value = ''
+
+  // 检查是否同意用户协议
+  if (!form.value.agreedToTerms) {
+    error.value = '请先阅读并同意用户协议和隐私政策'
+    return
+  }
 
   const result = await authStore.register(form.value.account, form.value.password)
   if (result.success) {
@@ -93,6 +112,14 @@ async function handleRegister() {
   } else {
     error.value = result.message
   }
+}
+
+function showTerms() {
+  alert('用户协议\n\n1. 用户应遵守平台规则，不得发布不当内容\n2. 评分应客观公正，不得恶意评分\n3. 平台有权对违规行为进行处理\n4. 用户应保护账号安全，不得将账号转借他人')
+}
+
+function showPrivacy() {
+  alert('隐私政策\n\n1. 我们重视您的隐私保护\n2. 您的个人信息仅用于平台功能实现\n3. 我们不会向第三方泄露您的个人信息\n4. 您有权随时查看和修改您的个人信息')
 }
 </script>
 
@@ -281,6 +308,63 @@ async function handleRegister() {
 
 .register__link:hover {
   text-shadow: 0 2px 8px rgba(102, 126, 234, 0.8);
+}
+
+.register__agreement {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.register__checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.register__checkbox {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: rgba(255, 255, 255, 0.9);
+}
+
+.register__checkbox-text {
+  flex: 1;
+  user-select: none;
+}
+
+.register__terms-link {
+  color: #fff;
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.register__terms-link:hover {
+  text-shadow: 0 1px 3px rgba(102, 126, 234, 0.8);
+}
+
+.register__button--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.register__button--disabled:hover {
+  transform: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 /*=============== BREAKPOINTS ===============*/
