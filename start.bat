@@ -46,7 +46,7 @@ start "Vite Frontend" cmd /k "npm run dev"
 
 echo.
 echo ✅ 服务已启动！
-echo 📱 前端地址: http://localhost:5000
+echo 📱 前端地址: http://localhost:5002
 echo 🔧 后端地址: http://localhost:5001
 echo.
 echo 关闭此窗口将停止所有服务
