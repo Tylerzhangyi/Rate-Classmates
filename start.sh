@@ -99,10 +99,35 @@ cd backend
 if [ -d ".venv" ]; then
     echo "📦 检测到虚拟环境，激活中..."
     source .venv/bin/activate 2>/dev/null || true
+    PYTHON_CMD="python3"
+    PIP_CMD="pip3"
+else
+    PYTHON_CMD="python3"
+    PIP_CMD="pip3"
+fi
+
+# 检查并安装 Python 依赖
+echo "📦 检查 Python 依赖..."
+if [ -f "requirements.txt" ]; then
+    # 检查 Django 是否已安装
+    if ! $PYTHON_CMD -c "import django" 2>/dev/null; then
+        echo "⚠️  Django 未安装，正在安装依赖..."
+        $PIP_CMD install -r requirements.txt --quiet || {
+            echo "❌ 依赖安装失败，请手动执行: pip3 install -r backend/requirements.txt"
+            cd ..
+            exit 1
+        }
+        echo "✅ 依赖安装完成"
+    else
+        echo "✅ Python 依赖已就绪"
+    fi
+else
+    echo "⚠️  未找到 requirements.txt，跳过依赖检查"
 fi
 
 # 启动后端并保存日志
-python3 manage.py runserver 0.0.0.0:5001 > ../backend.log 2>&1 &
+echo "🚀 启动 Django 服务器..."
+$PYTHON_CMD manage.py runserver 0.0.0.0:5001 > ../backend.log 2>&1 &
 BACKEND_PID=$!
 cd ..
 
