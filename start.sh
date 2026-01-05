@@ -32,17 +32,51 @@ fi
 
 # 检查并清理端口占用
 echo "🔍 检查端口占用情况..."
-if lsof -ti:5000 > /dev/null 2>&1; then
-    echo "⚠️  端口 5000 被占用，正在清理..."
-    lsof -ti:5000 | xargs kill -9 2>/dev/null
-    sleep 1
-fi
 
-if lsof -ti:5001 > /dev/null 2>&1; then
-    echo "⚠️  端口 5001 被占用，正在清理..."
-    lsof -ti:5001 | xargs kill -9 2>/dev/null
-    sleep 1
-fi
+# 清理端口 5000
+clean_port() {
+    local port=$1
+    local pids
+    
+    # 尝试使用 lsof
+    if command -v lsof &> /dev/null; then
+        pids=$(lsof -ti:$port 2>/dev/null)
+        if [ ! -z "$pids" ]; then
+            echo "⚠️  端口 $port 被占用，正在清理进程: $pids"
+            echo "$pids" | xargs kill -9 2>/dev/null
+            sleep 2
+        fi
+    fi
+    
+    # 尝试使用 fuser（如果可用）
+    if command -v fuser &> /dev/null; then
+        fuser -k $port/tcp 2>/dev/null
+        sleep 1
+    fi
+    
+    # 尝试使用 netstat + kill
+    if command -v netstat &> /dev/null; then
+        pids=$(netstat -tulpn 2>/dev/null | grep ":$port " | awk '{print $7}' | cut -d'/' -f1 | grep -v '-' | sort -u)
+        if [ ! -z "$pids" ]; then
+            echo "⚠️  端口 $port 被占用，正在清理进程: $pids"
+            echo "$pids" | xargs kill -9 2>/dev/null
+            sleep 2
+        fi
+    fi
+    
+    # 验证端口是否已释放
+    if command -v lsof &> /dev/null; then
+        if lsof -ti:$port > /dev/null 2>&1; then
+            echo "❌ 警告: 端口 $port 仍被占用，请手动清理"
+            return 1
+        else
+            echo "✅ 端口 $port 已释放"
+        fi
+    fi
+}
+
+clean_port 5000
+clean_port 5001
 
 # 启动函数
 cleanup() {
