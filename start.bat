@@ -37,7 +37,7 @@ if not exist "node_modules" (
 )
 
 echo 🔧 启动后端服务 (Django)...
-start "Django Backend" cmd /k "cd backend && python manage.py runserver"
+start "Django Backend" cmd /k "cd backend && python manage.py runserver 5001"
 
 timeout /t 2 /nobreak >nul
 
@@ -46,8 +46,8 @@ start "Vite Frontend" cmd /k "npm run dev"
 
 echo.
 echo ✅ 服务已启动！
-echo 📱 前端地址: http://localhost:5173
-echo 🔧 后端地址: http://localhost:8000
+echo 📱 前端地址: http://localhost:5000
+echo 🔧 后端地址: http://localhost:5001
 echo.
 echo 关闭此窗口将停止所有服务
 echo.
