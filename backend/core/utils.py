@@ -1,6 +1,6 @@
 import json
 from functools import wraps
-from typing import Any, Callable
+from typing import Any, Callable, Optional
 
 from django.http import HttpRequest, JsonResponse
 
@@ -10,10 +10,23 @@ def parse_json(request: HttpRequest) -> dict[str, Any]:
         return json.loads(request.body or "{}")
     except json.JSONDecodeError:
         return {}
+ 
+def api_response(
+    code: int = 200,
+    message: str = "success",
+    data: Optional[Any] = None,
+    status: Optional[int] = None,
+) -> JsonResponse:
+    """统一 API 响应格式封装。
 
-
-def api_response(code: int = 200, message: str = "success", data: Any | None = None, status: int | None = None) -> JsonResponse:
-    return JsonResponse({"code": code, "message": message, "data": data}, status=status or code, safe=False)
+    注意：这里使用 Optional[...] 而不是 `|` 联合类型，
+    以兼容 Python 3.9 环境（服务器上当前使用的版本）。
+    """
+    return JsonResponse(
+        {"code": code, "message": message, "data": data},
+        status=status or code,
+        safe=False,
+    )
 
 
 def allow_methods(methods: list[str]) -> Callable:
