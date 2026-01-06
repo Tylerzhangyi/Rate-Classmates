@@ -24,10 +24,13 @@ class SimpleCorsMiddleware:
             "http://127.0.0.1:5002",
             "http://127.0.0.1:5000",
             "http://127.0.0.1:5173",
+            "http://110.40.153.38",
             "http://110.40.153.38:8805",
             "http://110.40.153.38:5002",
             "http://110.40.153.38:5000",
             "http://110.40.153.38:5173",
+            "http://tyler.yunguhs.com",
+            "https://tyler.yunguhs.com",
             "http://tyler.yunguhs.com:8805",
         )
         
