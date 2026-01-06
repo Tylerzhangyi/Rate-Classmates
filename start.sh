@@ -33,7 +33,7 @@ fi
 # 检查并清理端口占用
 echo "🔍 检查端口占用情况..."
 
-# 清理端口 5002（前端）和 5001（后端）
+# 清理端口 8805（前端）和 5001（后端）
 clean_port() {
     local port=$1
     local pids
@@ -75,7 +75,7 @@ clean_port() {
     fi
 }
 
-clean_port 5002
+clean_port 8805
 clean_port 5001
 
 # 启动函数
@@ -195,7 +195,7 @@ FRONTEND_PID=$!
 
 echo ""
 echo "✅ 服务已启动！"
-echo "📱 前端地址: http://0.0.0.0:5002"
+echo "📱 前端地址: http://0.0.0.0:8805"
 echo "🔧 后端地址: http://0.0.0.0:5001"
 echo ""
 echo "按 Ctrl+C 停止所有服务"

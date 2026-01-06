@@ -6,8 +6,10 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     host: '0.0.0.0',
-    port: 5002,
+    port: 8805,
     strictPort: true, // 如果端口被占用，报错而不是自动切换
+    // 允许通过域名访问 Vite Dev Server
+    allowedHosts: ['tyler.yunguhs.com'],
     watch: {
       ignored: ['**/.venv/**', '**/node_modules/**', '**/.git/**']
     }
