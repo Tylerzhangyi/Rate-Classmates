@@ -3,8 +3,9 @@ import axios from 'axios'
 const client = axios.create({
   // 服务器部署时，使用环境变量 VITE_API_BASE_URL 设置后端地址
   // 开发环境默认使用 localhost，生产环境应设置为服务器 IP 地址
-  // 例如：VITE_API_BASE_URL=http://110.40.153.38:5001/api/
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://110.40.153.38:5001/api/',
+  // 例如：VITE_API_BASE_URL=http://tyler.yunguhs.com:5001/api/
+  // 默认改用域名，避免 IP 域名混用导致 cookie 不发送
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://tyler.yunguhs.com:5001/api/',
   withCredentials: true  // 启用 cookie，用于 session 认证
 })
 
